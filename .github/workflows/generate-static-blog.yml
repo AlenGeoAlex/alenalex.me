@@ -5,6 +5,14 @@ on:
     branches: [main]
     paths:
       - "blogs/**"
+      - "apps/generator/**"
+  workflow_dispatch:
+    inputs:
+      changed_dirs:
+        description: "Comma-separated post slugs to regenerate, or * for all posts"
+        required: false
+        default: "*"
+        type: string
 
 permissions:
   contents: write
@@ -23,8 +31,12 @@ jobs:
       - name: Get changed post directories
         id: changed
         run: |
-          CHANGED=$(git diff --name-only HEAD^ HEAD -- 'blogs/posts/**' | \
-            awk -F/ '{print $3}' | sort -u | tr '\n' ',')
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CHANGED="${{ inputs.changed_dirs }}"
+          else
+            CHANGED=$(git diff --name-only HEAD^ HEAD -- 'blogs/posts/**' | \
+              awk -F/ '{print $3}' | sort -u | tr '\n' ',')
+          fi
           echo "dirs=$CHANGED" >> "$GITHUB_OUTPUT"
 
       - name: Install Rust
@@ -61,7 +73,7 @@ jobs:
           title: "Regenerate blog posts"
           body: |
             Automated regeneration from changes in `blogs/posts/`.
-            
+
             Changed post dirs: ${{ steps.changed.outputs.dirs }}
           branch: generated/blog-posts
           delete-branch: true

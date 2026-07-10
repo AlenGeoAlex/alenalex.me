@@ -6,7 +6,6 @@ use crate::errors::ConfigErrors;
 pub struct GeneratorConfig{
     pub posts_dir: String,
     pub template_path: String,
-    pub blogspec_output: String,
     pub script_output: String,
     pub posts_output_dir: String,
 
@@ -26,7 +25,6 @@ impl GeneratorConfig {
         Ok(Self {
             posts_dir: required_env("POSTS_DIR")?,
             template_path: required_env("TEMPLATE_PATH")?,
-            blogspec_output: required_env("BLOGSPEC_OUTPUT")?,
             posts_output_dir: required_env("POSTS_OUTPUT_DIR")?,
             r2_account_id: required_env("R2_ACCOUNT_ID")?,
             r2_access_key: required_env("R2_ACCESS_KEY")?,
