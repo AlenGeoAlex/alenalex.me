@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "blogs/posts/**"
+      - "blogs/**"
 
 permissions:
   contents: write
