@@ -586,6 +586,7 @@ dependencies = [
  "futures",
  "generator-core",
  "log",
+ "rust-s3",
  "serde_json",
  "tokio",
 ]

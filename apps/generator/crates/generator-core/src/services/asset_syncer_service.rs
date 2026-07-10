@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use s3::{Bucket, Region};
 use crate::config::GeneratorConfig;
 use anyhow::Result;
@@ -8,49 +9,14 @@ use crate::models::remote_asset::RemoteAsset;
 
 pub struct AssetSyncerService {
 
-    bucket : Box<Bucket>,
-    public_endpoint: String,
+    pub bucket : Arc<Box<Bucket>>,
+    pub public_endpoint: String,
 
 }
 
 impl AssetSyncerService {
 
     const META_KEY: &str = "file-metadata";
-
-    pub fn create(
-        generator_config: &GeneratorConfig
-    ) -> Result<AssetSyncerService> {
-        let bucket_name = generator_config.r2_bucket.clone();
-        let Ok(credentials) = Credentials::new(
-            Some(generator_config.r2_access_key.as_str()),
-            Some(generator_config.r2_secret_key.as_str()),
-            None,
-            None,
-            None
-        ) else{
-            return Err(anyhow::anyhow!("Failed to create credentials"));
-        };
-
-        let bucket = {
-            match Bucket::new(
-                bucket_name.as_str(),
-                Region::R2 {
-                    account_id: generator_config.r2_account_id.clone()
-                },
-                credentials
-            ) {
-                Ok(bucket) => bucket,
-                Err(err) => {
-                    return Err(anyhow::anyhow!("Failed to create bucket: {}", err));
-                }
-            }
-        };
-
-        Ok(AssetSyncerService {
-            bucket,
-            public_endpoint: generator_config.r2_public_url_base.clone(),
-        })
-    }
 
     pub async fn try_get_remote(&self,
                                 post_slug: &str,

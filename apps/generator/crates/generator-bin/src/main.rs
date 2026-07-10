@@ -6,6 +6,8 @@ use std::path::Path;
 use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use anyhow::Result;
+use s3::{Bucket, Region};
+use s3::creds::Credentials;
 use generator_core::models::post::Post;
 use generator_core::config::GeneratorConfig;
 use generator_core::models::blog_spec::BlogSpec;
@@ -13,6 +15,7 @@ use generator_core::models::post_asset::PostAsset;
 use generator_core::models::recent_post::RecentPost;
 use generator_core::models::remote_asset::RemoteAsset;
 use generator_core::services::asset_syncer_service::AssetSyncerService;
+use generator_core::services::blog_spec_service::BlogSpecService;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -22,7 +25,14 @@ async fn main() -> Result<()> {
         GeneratorConfig::from_env()
             .expect("Failed to load generator configuration from environment variables")
     );
-    let asset_sync_service = Arc::new(AssetSyncerService::create(gen_config.as_ref())?);
+    let s3: Arc<Box<Bucket>> = Arc::new(connect_s3(gen_config.as_ref())?);
+    let asset_sync_service = Arc::new(AssetSyncerService {
+        bucket: s3.clone(),
+        public_endpoint: gen_config.r2_public_url_base.clone(),
+    });
+    let blog_spec_service = Arc::new(BlogSpecService {
+        bucket: s3.clone(),
+    });
 
     log::info!("Starting generator at {}", gen_config.posts_dir);
 
@@ -41,7 +51,7 @@ async fn main() -> Result<()> {
     }
 
     write_injected_constants(&posts, gen_config.as_ref())?;
-    generate_blog_spec(&posts, gen_config.blogspec_output.clone())?;
+    blog_spec_service.update_blog_spec(&posts).await?;
     Ok(())
 }
 
@@ -219,6 +229,37 @@ fn get_posts(gen_config: &GeneratorConfig) -> Result<Vec<Post>> {
     }
 
     Ok(posts)
+}
+
+pub fn connect_s3(generator_config: &GeneratorConfig) -> Result<Box<Bucket>>
+{
+    let bucket_name = generator_config.r2_bucket.clone();
+    let Ok(credentials) = Credentials::new(
+        Some(generator_config.r2_access_key.as_str()),
+        Some(generator_config.r2_secret_key.as_str()),
+        None,
+        None,
+        None
+    ) else{
+        return Err(anyhow::anyhow!("Failed to create credentials"));
+    };
+
+    let bucket = {
+        match Bucket::new(
+            bucket_name.as_str(),
+            Region::R2 {
+                account_id: generator_config.r2_account_id.clone()
+            },
+            credentials
+        ) {
+            Ok(bucket) => bucket,
+            Err(err) => {
+                return Err(anyhow::anyhow!("Failed to create bucket: {}", err));
+            }
+        }
+    };
+
+    return Ok(bucket);
 }
 
 pub fn generate_blog_spec(posts: &[Post], output_path: String) -> anyhow::Result<()> {

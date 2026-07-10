@@ -1,0 +1,68 @@
+name: generate-static-blog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "blogs/posts/**"
+
+permissions:
+  contents: write
+  actions: write
+  id-token: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get changed post directories
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD^ HEAD -- 'blogs/posts/**' | \
+            awk -F/ '{print $3}' | sort -u | tr '\n' ',')
+          echo "dirs=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/generator
+
+      - name: Build generator
+        working-directory: apps/generator
+        run: cargo build --release
+
+      - name: Run generator
+        working-directory: apps/generator
+        run: cargo run --release --bin generator-bin
+        env:
+          POSTS_DIR: ../../blogs/posts
+          TEMPLATE_PATH: ../../blogs/post-template.html
+          POSTS_OUTPUT_DIR: ../../apps/portfolio-alpine/writing
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PUBLIC_URL_BASE: ${{ secrets.R2_PUBLIC_URL_BASE }}
+          CHANGED_POST_DIRS: ${{ steps.changed.outputs.dirs }}
+          RUST_LOG: info
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: regenerate blog posts"
+          title: "Regenerate blog posts"
+          body: |
+            Automated regeneration from changes in `blogs/posts/`.
+            
+            Changed post dirs: ${{ steps.changed.outputs.dirs }}
+          branch: generated/blog-posts
+          delete-branch: true
+          add-paths: apps/portfolio-alpine/writing

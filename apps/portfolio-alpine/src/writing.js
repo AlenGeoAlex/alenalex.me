@@ -3,63 +3,7 @@
 // Preview mode: ?preview=<sha> makes drafts visible and appends sha to post links.
 
 const BLOGSPEC_URL =
-  "https://cdn.jsdelivr.net/gh/AlenGeoAlex/alenalex.me@main/blogs/.blogspec.json";
-
-const STATIC_POSTS = [
-  {
-    title: "Games played in 2024",
-    slug: "games-2024",
-    date: "2024-12-31",
-    published: true,
-    icon: "🎮",
-    tags: ["gaming", "personal"],
-    excerpt:
-      "A year in games. What I finished, what I abandoned, and what surprised me.",
-    hash: "a3f9e2",
-  },
-  {
-    title: "Beware of poison in the source",
-    slug: "poison-in-the-source",
-    date: "2024-10-24",
-    published: true,
-    icon: "⚗️",
-    tags: ["security", "open-source", "backend"],
-    excerpt: "Supply chain attacks are patient. Most defences are not.",
-    hash: "b7c1d0",
-  },
-  {
-    title: "Common misconceptions of the AGPL",
-    slug: "misconceptions-agpl",
-    date: "2024-10-02",
-    published: true,
-    icon: "📜",
-    tags: ["open-source", "licensing"],
-    excerpt:
-      "The AGPL scares people who haven't read it. Here's what it actually says.",
-    hash: "d2a88f",
-  },
-  {
-    title: "Lessons from the allotment",
-    slug: "lessons-allotment",
-    date: "2024-07-02",
-    published: true,
-    icon: "🌱",
-    tags: ["personal"],
-    excerpt: "Things software taught me about gardening, and vice versa.",
-    hash: "f03c77",
-  },
-  {
-    title: "On distributed tracing in a monolith",
-    slug: "distributed-tracing-monolith",
-    date: "2024-05-14",
-    published: false,
-    icon: "🔍",
-    tags: ["backend", "observability"],
-    excerpt:
-      "You don't need microservices to benefit from distributed tracing.",
-    hash: "e91bc3",
-  },
-];
+  "https://assets.alenalex.me/assets/hotlink-ok/.blogspec.json";
 
 function writingComponent() {
   return {
@@ -73,7 +17,6 @@ function writingComponent() {
     previewSha: null,
     isPreview: false,
 
-    // ── Filters ──────────────────────────────────────────────
     query: "",
     activeTags: [],
 
@@ -104,8 +47,7 @@ function writingComponent() {
           const data = await res.json();
           posts = data.posts;
         } catch {
-          console.warn("writing.js: falling back to static post data");
-          posts = STATIC_POSTS;
+          console.warn("writing.js: Failed to load blogspec.json");
         }
 
         posts.sort((a, b) => new Date(b.date) - new Date(a.date));
