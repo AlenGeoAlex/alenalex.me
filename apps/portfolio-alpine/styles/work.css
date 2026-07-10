@@ -1,0 +1,209 @@
+/* work.css */
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.work-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.work-canvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+    cursor: grab;
+}
+
+.work-canvas:active {
+    cursor: grabbing;
+}
+
+/* ── Header overlay ──────────────────────────────────────────── */
+.work-header {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.work-prompt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--dim);
+}
+
+.work-prompt::before {
+    content: "$ ";
+}
+
+.work-meta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--ts);
+    margin-top: 4px;
+}
+
+/* ── Warning banner ──────────────────────────────────────────── */
+.work-warning {
+    position: absolute;
+    bottom: 32px;
+    left: 24px;
+    z-index: 10;
+    font-family: var(--font-mono);
+    font-size: var(--fs-9);
+    color: var(--warn);
+    letter-spacing: 0.04em;
+    pointer-events: none;
+}
+
+/* ── Loading ─────────────────────────────────────────────────── */
+.work-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--dim);
+    z-index: 5;
+}
+
+/* ── Node hover icon ─────────────────────────────────────────── */
+.node-hover-icon {
+    position: absolute;
+    pointer-events: none;
+    z-index: 8;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    transform: translate(-50%, -50%);
+}
+
+.node-hover-icon.visible {
+    opacity: 1;
+}
+
+.node-hover-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    filter: brightness(0.9);
+}
+
+/* ── Detail card ─────────────────────────────────────────────── */
+.work-card {
+    position: absolute;
+    z-index: 20;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    min-width: 240px;
+    max-width: 300px;
+    pointer-events: all;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.work-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.work-card-icon img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+.work-card-name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-13);
+    color: var(--bright);
+    flex: 1;
+}
+
+.work-card-pinned {
+    font-family: var(--font-mono);
+    font-size: var(--fs-9);
+    color: var(--warn);
+    letter-spacing: 0.06em;
+    border: 1px solid var(--warn);
+    padding: 1px 5px;
+}
+
+.work-card-close {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.work-card-close:hover {
+    color: var(--bright);
+}
+
+.work-card-desc {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--fs-13);
+    color: var(--dim);
+    line-height: 1.5;
+    margin-bottom: 10px;
+    min-height: 20px;
+}
+
+.work-card-stats {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.work-card-stat {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--dim);
+}
+
+.work-card-stat span {
+    color: var(--mid);
+}
+
+.work-card-lang {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    margin-bottom: 12px;
+}
+
+.work-card-lang-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.work-card-link {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--bl);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+}
+
+.work-card-link:hover {
+    color: var(--bright);
+    text-decoration: underline;
+}

@@ -1,0 +1,198 @@
+/* now.css */
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.now-main {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 64px 24px 48px;
+    overflow-y: auto;
+}
+
+.now-shell {
+    width: 100%;
+    max-width: 560px;
+}
+
+/* ── Page header ─────────────────────────────────────────────── */
+.now-header {
+    margin-bottom: 48px;
+}
+
+.now-prompt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--bl);
+    margin-bottom: 12px;
+}
+
+.now-prompt::before {
+    content: "$ ";
+    color: var(--dim);
+}
+
+.now-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-34);
+    color: var(--bright);
+    font-style: italic;
+    line-height: 1.1;
+    margin-bottom: 6px;
+}
+
+.now-updated {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--ts);
+    letter-spacing: 0.04em;
+}
+
+/* ── Sections ────────────────────────────────────────────────── */
+.now-section {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+        opacity 0.4s ease,
+        transform 0.4s ease;
+}
+
+.now-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.now-section-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.now-section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ── Items ───────────────────────────────────────────────────── */
+.now-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.now-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--mid);
+}
+
+.now-item-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+    opacity: 0.85;
+    border-radius: 3px;
+}
+
+.now-item-icon-text {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.now-item a {
+    color: var(--mid);
+    text-decoration: none;
+}
+
+.now-item a:hover {
+    color: var(--bright);
+}
+
+.now-item-sub {
+    color: var(--dim);
+    font-size: var(--fs-10);
+    margin-left: 30px;
+    margin-top: -6px;
+}
+
+/* ── Simple text items ───────────────────────────────────────── */
+.now-text-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.now-text-item {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--mid);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.now-text-item::before {
+    content: "·";
+    color: var(--dim);
+}
+
+/* ── Socials ─────────────────────────────────────────────────── */
+.now-socials {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.now-social-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+}
+
+.now-social-key {
+    color: var(--dim);
+    width: 72px;
+    flex-shrink: 0;
+}
+
+.now-social-val a {
+    color: var(--bl);
+    text-decoration: none;
+}
+
+.now-social-val a:hover {
+    color: var(--bright);
+    text-decoration: underline;
+}
+
+/* ── Cursor ──────────────────────────────────────────────────── */
+.now-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 12px;
+    background: var(--bright);
+    box-shadow: 0 0 6px rgba(240, 240, 232, 0.3);
+    animation: cblink 1.1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+}

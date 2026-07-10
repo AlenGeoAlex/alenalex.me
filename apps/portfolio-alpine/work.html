@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>work · Alen Alex</title>
+        <meta name="description" content="GitHub repositories — Alen Alex." />
+
+        <link rel="stylesheet" href="styles/tokens.css" />
+        <link rel="stylesheet" href="styles/base.css" />
+        <link rel="stylesheet" href="styles/layout.css" />
+        <link rel="stylesheet" href="styles/work.css" />
+    </head>
+    <body>
+        <div class="scanlines" aria-hidden="true"></div>
+        <div class="vignette" aria-hidden="true"></div>
+
+        <div class="page-shell">
+            <main
+                class="work-main"
+                x-data="workComponent()"
+                x-init="init()"
+                aria-label="Work"
+            >
+                <div class="work-header">
+                    <div class="work-prompt">fetch --source github --viz constellation</div>
+                    <div class="work-meta" x-show="!loading" x-cloak>
+                        <span x-text="repos.length"></span> repos
+                        <span x-show="pinnedSlugs.size"> · <span x-text="pinnedSlugs.size"></span> pinned</span>
+                        <span x-show="usingFallback"> · <span style="color:var(--warn)">[!] backend unreachable · using github api</span></span>
+                    </div>
+                </div>
+
+                <div class="work-loading" x-show="loading" x-cloak>
+                    fetching repos<span class="cursor"></span>
+                </div>
+
+                <div
+                    id="work-canvas-container"
+                    style="flex:1; position:relative; overflow:hidden;"
+                    x-show="!loading"
+                    x-cloak
+                >
+                    <svg id="work-svg" style="width:100%;height:100%;display:block;"></svg>
+
+                    <div id="node-hover-icon" class="node-hover-icon">
+                        <img src="" alt="" />
+                    </div>
+
+                    <div
+                        class="work-card"
+                        x-show="card"
+                        x-cloak
+                        :style="card ? `left:${card.x}px; top:${card.y}px` : ''"
+                        @click.stop
+                    >
+                        <template x-if="card">
+                            <div>
+                                <div class="work-card-header">
+                                    <div class="work-card-icon" x-show="langIcon(card.repo.language)">
+                                        <img :src="langIcon(card.repo.language)" :alt="card.repo.language" />
+                                    </div>
+                                    <span class="work-card-name" x-text="card.repo.name"></span>
+                                    <span class="work-card-pinned" x-show="card.pinned">pinned</span>
+                                    <button class="work-card-close" @click="closeCard()">×</button>
+                                </div>
+
+                                <p
+                                    class="work-card-desc"
+                                    x-text="card.repo.description || 'no description'"
+                                ></p>
+
+                                <div class="work-card-stats">
+                                    <span class="work-card-stat">★ <span x-text="card.repo.stargazers_count || 0"></span></span>
+                                    <span class="work-card-stat">⑂ <span x-text="card.repo.forks_count || 0"></span></span>
+                                    <span class="work-card-stat" x-show="card.repo.open_issues_count">
+                                        ◎ <span x-text="card.repo.open_issues_count"></span>
+                                    </span>
+                                </div>
+
+                                <div class="work-card-lang" x-show="card.repo.language">
+                                    <div
+                                        class="work-card-lang-dot"
+                                        :style="`background:${langColor(card.repo.language)}`"
+                                    ></div>
+                                    <span style="font-family:var(--font-mono);font-size:var(--fs-10);color:var(--dim)" x-text="card.repo.language"></span>
+                                </div>
+
+                                <a
+                                    class="work-card-link"
+                                    :href="repoUrl(card.repo)"
+                                    target="_blank"
+                                    rel="noopener"
+                                >view on github →</a>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div
+                    style="position:absolute;bottom:32px;right:20px;z-index:10;pointer-events:none;"
+                    x-show="!loading"
+                    x-cloak
+                >
+                    <div style="font-family:var(--font-mono);font-size:var(--fs-9);color:var(--ts);text-align:right;line-height:2;">
+                        <div>○ size = stars</div>
+                        <div>◌ dashed ring = pinned</div>
+                        <div>● colour = language</div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+        <script src="src/config.js"></script>
+        <script src="src/layout.js"></script>
+        <script src="src/work.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" defer></script>
+        <script>
+            mountLayout({ title: 'alen@alenalex.me: ~/work', activePage: 'work' });
+        </script>
+    </body>
+</html>

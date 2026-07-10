@@ -1,0 +1,460 @@
+/* layout.css */
+
+/* ── Page shell ─────────────────────────────────────────────── */
+.page-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    z-index: 10;
+    font-size: var(--fs-10);
+    color: var(--dim);
+    letter-spacing: 0.04em;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topbar-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.topbar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.topbar-dot:nth-child(1) {
+    background: #ff5f57;
+}
+.topbar-dot:nth-child(2) {
+    background: #febc2e;
+}
+.topbar-dot:nth-child(3) {
+    background: #28c840;
+}
+
+.topbar-title {
+    color: var(--dim);
+    font-size: var(--fs-10);
+}
+
+.topbar-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.topbar-nav a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: var(--fs-13);
+    letter-spacing: 0.06em;
+    transition: color 0.15s;
+}
+
+.topbar-nav a:hover {
+    color: var(--acc);
+}
+.topbar-nav a.active {
+    color: var(--mid);
+}
+
+/* ── Body grid ───────────────────────────────────────────────── */
+.body-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 300px 260px;
+    min-height: 0;
+}
+
+/* ── Column shared ───────────────────────────────────────────── */
+.col {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+.col:last-child {
+    border-right: none;
+}
+.col::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Terminal column ─────────────────────────────────────────── */
+.col-terminal {
+    padding: 18px 0 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#terminal {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 40px 0 80px;
+}
+
+/* ── Guestbook column ────────────────────────────────────────── */
+.col-guestbook {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gb-header {
+    flex-shrink: 0;
+    padding: 10px 14px 8px;
+    font-size: var(--fs-9);
+    color: var(--gb-label);
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border2);
+}
+
+.gb-stream {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 4px 0 0;
+}
+.gb-stream::-webkit-scrollbar {
+    display: none;
+}
+
+.gb-entry {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--border2);
+}
+
+.gb-entry-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.gb-entry-name {
+    font-size: var(--fs-12);
+    color: var(--gb-name);
+}
+
+.gb-entry-date {
+    font-size: var(--fs-9);
+    color: var(--gb-date);
+}
+
+.gb-entry-msg {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--fs-13);
+    color: var(--gb-msg);
+    line-height: 1.5;
+}
+
+.gb-entry-like {
+    margin-top: 8px;
+    font-size: var(--fs-10);
+    color: var(--gb-like);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    transition: color 0.15s;
+}
+.gb-entry-like:hover {
+    color: var(--dim);
+}
+
+.gb-input-area {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border2);
+    padding: 10px 14px;
+}
+
+.gb-input-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.gb-input-name {
+    font-size: var(--fs-9);
+    color: var(--gb-name);
+    letter-spacing: 0.02em;
+}
+
+.gb-reroll {
+    font-size: var(--fs-9);
+    color: var(--dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    padding: 0;
+    transition: color 0.15s;
+}
+.gb-reroll:hover {
+    color: var(--acc);
+}
+
+.gb-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    color: var(--gb-input);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--fs-13);
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    padding: 4px 0;
+    min-height: 48px;
+}
+.gb-textarea::placeholder {
+    color: var(--gb-ph);
+}
+
+.gb-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.gb-submit {
+    font-size: var(--fs-9);
+    color: var(--dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    padding: 0;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+}
+.gb-submit:hover {
+    color: var(--acc);
+}
+
+.gb-pending {
+    font-size: var(--fs-9);
+    color: var(--dim);
+    margin-top: 4px;
+    text-align: right;
+}
+
+/* ── Dashboard column ────────────────────────────────────────── */
+.col-dashboard {
+    font-size: var(--fs-10);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+.col-dashboard::-webkit-scrollbar {
+    display: none;
+}
+
+.db-section {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border2);
+}
+
+.db-label {
+    font-size: var(--fs-9);
+    color: var(--db-label);
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.db-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    line-height: 1.9;
+}
+
+.db-key {
+    color: var(--db-key);
+    font-size: var(--fs-10);
+}
+.db-val {
+    color: var(--db-val);
+    font-size: var(--fs-10);
+    text-align: right;
+}
+.db-val.ok {
+    color: var(--db-ok);
+}
+.db-val.warn {
+    color: var(--db-warn);
+}
+
+/* ── Clock ───────────────────────────────────────────────────── */
+.db-clock {
+    font-size: var(--fs-20);
+    color: var(--db-clock);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    font-weight: 300;
+    margin-bottom: 3px;
+}
+
+.db-date-str {
+    font-size: var(--fs-9);
+    color: var(--db-date);
+    letter-spacing: 0.04em;
+}
+
+/* ── Status dot ──────────────────────────────────────────────── */
+.sdot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 5px;
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.sdot-online {
+    background: #6aad6a;
+    box-shadow: 0 0 5px rgba(106, 173, 106, 0.5);
+}
+.sdot-idle {
+    background: #c4973a;
+}
+.sdot-dnd {
+    background: #b03a2a;
+}
+.sdot-offline {
+    background: #3a3a38;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ── Heatmap ─────────────────────────────────────────────────── */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.heatmap-week {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.heatmap-dot {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 1px;
+    position: relative;
+    cursor: default;
+}
+
+.heatmap-dot.h0 {
+    background: var(--h0);
+}
+.heatmap-dot.h1 {
+    background: var(--h1);
+}
+.heatmap-dot.h2 {
+    background: var(--h2);
+}
+.heatmap-dot.h3 {
+    background: var(--h3);
+}
+.heatmap-dot.h4 {
+    background: var(--h4);
+}
+
+.heatmap-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-size: var(--fs-9);
+    padding: 2px 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 50;
+}
+.heatmap-dot:hover .heatmap-tip {
+    display: block;
+}
+
+/* ── Statusbar ───────────────────────────────────────────────── */
+.statusbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    padding: 0 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    font-size: var(--fs-12);
+    color: var(--dim);
+    letter-spacing: 0.04em;
+}
+
+.statusbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.statusbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.statusbar-right a {
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.statusbar-right a:hover {
+    color: var(--acc);
+}
+
+.sb-sep {
+    color: var(--border);
+}

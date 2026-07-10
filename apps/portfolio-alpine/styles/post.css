@@ -1,0 +1,404 @@
+/* post.css */
+/* Scoped to post pages only. Works in both dark (default) and light mode. */
+
+/* ── Light mode tokens ───────────────────────────────────────── */
+.light-mode {
+    --post-bg: #f5f2eb;
+    --post-bg2: #ede9e0;
+    --post-border: #d8d3c8;
+    --post-bright: #1a1a18;
+    --post-mid: #2c2c2a;
+    --post-dim: #5a5a52;
+    --post-dimmer: #9a9a90;
+    --post-acc: #3a3a32;
+    --post-bl: #2a5a8a;
+    --post-hash: #8a8a80;
+    --post-ts: #9a9a90;
+    --post-warn: #8a5a1a;
+    --post-code-bg: #eae6dc;
+}
+
+/* ── Dark mode tokens (default) ──────────────────────────────── */
+:root:not(.light-mode),
+.dark-mode {
+    --post-bg: #0a0a0a;
+    --post-bg2: #0d0e13;
+    --post-border: #252522;
+    --post-bright: #f0f0e8;
+    --post-mid: #bfbfb7;
+    --post-dim: #b3b3ab;
+    --post-dimmer: #383834;
+    --post-acc: #d8d8cc;
+    --post-bl: #6a98be;
+    --post-hash: #585850;
+    --post-ts: #4a4a44;
+    --post-warn: #c4973a;
+    --post-code-bg: #111110;
+}
+
+/* ── Page layout ─────────────────────────────────────────────── */
+.post-page {
+    min-height: 100vh;
+    background: var(--post-bg);
+    color: var(--post-mid);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.post-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--post-border);
+    background: var(--post-bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.post-back {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    color: var(--post-bl);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+}
+
+.post-back:hover {
+    color: var(--post-bright);
+}
+
+.post-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.post-meta-top {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-hash);
+    letter-spacing: 0.04em;
+}
+
+/* Theme toggle */
+.post-theme-toggle {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-dim);
+    background: none;
+    border: 1px solid var(--post-border);
+    padding: 2px 8px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition:
+        color 0.15s,
+        border-color 0.15s;
+}
+
+.post-theme-toggle:hover {
+    color: var(--post-bright);
+    border-color: var(--post-dim);
+}
+
+/* ── Draft banner ────────────────────────────────────────────── */
+.post-draft-banner {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-warn);
+    border-bottom: 1px solid var(--post-warn);
+    padding: 6px 20px;
+    letter-spacing: 0.04em;
+    background: var(--post-bg);
+}
+
+/* ── Content column ──────────────────────────────────────────── */
+.post-content-wrap {
+    max-width: 75%;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+/* Post icon + title */
+.post-icon {
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.post-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 36px;
+    color: var(--post-bright);
+    line-height: 1.15;
+    margin-bottom: 12px;
+}
+
+.post-byline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-ts);
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--post-border);
+}
+
+.post-byline-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.post-byline-tag {
+    color: var(--post-dimmer);
+    font-size: var(--fs-9);
+}
+
+.post-byline-tag::before {
+    content: "#";
+}
+
+/* ── Prose ───────────────────────────────────────────────────── */
+.post-body {
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1.85;
+    color: var(--post-mid);
+}
+
+.post-body p {
+    margin-bottom: 1.4em;
+}
+
+.post-body h1,
+.post-body h2,
+.post-body h3,
+.post-body h4 {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--post-bright);
+    line-height: 1.2;
+    margin: 1.8em 0 0.6em;
+}
+
+.post-body h1 {
+    font-size: 28px;
+}
+.post-body h2 {
+    font-size: 24px;
+}
+.post-body h3 {
+    font-size: 20px;
+}
+.post-body h4 {
+    font-size: 18px;
+}
+
+.post-body a {
+    color: var(--post-bl);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+}
+
+.post-body a:hover {
+    color: var(--post-bright);
+}
+
+.post-body strong {
+    color: var(--post-bright);
+    font-weight: 500;
+}
+
+.post-body em {
+    font-style: italic;
+}
+
+.post-body blockquote {
+    border-left: 2px solid var(--post-border);
+    margin: 1.6em 0;
+    padding: 0.2em 0 0.2em 1.2em;
+    color: var(--post-dim);
+    font-style: italic;
+}
+
+.post-body ul,
+.post-body ol {
+    margin: 0 0 1.4em 1.4em;
+}
+
+.post-body li {
+    margin-bottom: 0.4em;
+}
+
+.post-body hr {
+    border: none;
+    border-top: 1px solid var(--post-border);
+    margin: 2.4em 0;
+}
+
+.post-body img {
+    max-width: 100%;
+    border: 1px solid var(--post-border);
+    margin: 1.6em 0;
+}
+
+/* ── Inline code ─────────────────────────────────────────────── */
+.post-body code:not(pre code) {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: var(--post-code-bg);
+    color: var(--post-acc);
+    padding: 1px 5px;
+    border-radius: 2px;
+}
+
+/* ── Code blocks (Prism) ─────────────────────────────────────── */
+.post-body pre {
+    background: var(--post-code-bg) !important;
+    border: 1px solid var(--post-border);
+    border-radius: 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 1.6em 0;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+}
+
+.post-body pre code {
+    font-family: var(--font-mono) !important;
+    font-size: 13px !important;
+    background: none !important;
+    padding: 0 !important;
+}
+
+/* ── Revisions ───────────────────────────────────────────────── */
+.post-revisions {
+    margin-top: 48px;
+    border-top: 1px solid var(--post-border);
+    padding-top: 20px;
+}
+
+.post-revisions-toggle {
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.post-revisions-toggle:hover {
+    color: var(--post-mid);
+}
+
+.post-revisions-chevron {
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.post-revisions-toggle.open .post-revisions-chevron {
+    transform: rotate(90deg);
+}
+
+.post-revisions-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease;
+}
+
+.post-revisions-list.open {
+    max-height: 600px;
+}
+
+.post-revision-row {
+    display: grid;
+    grid-template-columns: 68px 110px 1fr;
+    gap: 0 10px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    align-items: baseline;
+}
+
+.post-revision-sha {
+    color: var(--post-hash);
+}
+
+.post-revision-sha a {
+    color: var(--post-hash);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.post-revision-sha a:hover {
+    color: var(--post-bl);
+}
+
+.post-revision-date {
+    color: var(--post-ts);
+}
+
+.post-revision-msg {
+    color: var(--post-dim);
+}
+
+/* ── Statusbar ───────────────────────────────────────────────── */
+.post-statusbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-top: 1px solid var(--post-border);
+    background: var(--post-bg);
+    font-family: var(--font-mono);
+    font-size: var(--fs-10);
+    color: var(--post-dim);
+    letter-spacing: 0.04em;
+    z-index: 50;
+}
+
+.post-statusbar-right {
+    display: flex;
+    gap: 12px;
+}
+
+.post-statusbar-right a {
+    color: var(--post-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.post-statusbar-right a:hover {
+    color: var(--post-mid);
+}
+
+.post-sb-sep {
+    color: var(--post-border);
+}
