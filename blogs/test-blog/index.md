@@ -7,7 +7,7 @@ So here is what you are gonna see it
 > This is a quote
 
 ```sql
-SELECT * FROM users; // Test
+SELECT * FROM users; // 123
 ```
 
 ![This is a rust logo](./assets/rustlogo.png)

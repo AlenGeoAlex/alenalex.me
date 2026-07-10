@@ -55,9 +55,9 @@ jobs:
         working-directory: apps/generator
         run: cargo run --release --bin generator-bin
         env:
-          POSTS_DIR: ../../blogs/posts
-          TEMPLATE_PATH: ../../blogs/post-template.html
-          POSTS_OUTPUT_DIR: ../../apps/portfolio-alpine/writing
+          POSTS_DIR: ../../blogs/
+          TEMPLATE_PATH: ./post-template.html
+          POSTS_OUTPUT_DIR: ../portfolio-alpine/writing
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
