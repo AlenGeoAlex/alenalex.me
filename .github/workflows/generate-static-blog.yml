@@ -64,6 +64,7 @@ jobs:
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_PUBLIC_URL_BASE: ${{ secrets.R2_PUBLIC_URL_BASE }}
           CHANGED_POST_DIRS: ${{ steps.changed.outputs.dirs }}
+          SCRIPT_OUTPUT: ../portfolio-alpine/src
           RUST_LOG: info
 
       - name: Create Pull Request
