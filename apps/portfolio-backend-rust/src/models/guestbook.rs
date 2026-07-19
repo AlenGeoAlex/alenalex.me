@@ -40,7 +40,7 @@ impl FromRow<'_, SqliteRow> for Guestbook {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 
 pub enum GuestbookStatus {
     PendingApproval,

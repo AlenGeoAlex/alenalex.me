@@ -1,8 +1,14 @@
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
-use axum::{Error, Router, ServiceExt};
+use axum::Router;
+use axum::ServiceExt;
 use axum::routing::get;
+use utoipa::OpenApi;
+use utoipa_scalar::{Scalar, Servable};
+use crate::api_doc::ApiDoc;
 use crate::config::AppConfig;
+use crate::service::discord_service::DiscordService;
 use crate::state::root_state::RootState;
 
 pub mod db;
@@ -12,10 +18,13 @@ pub mod routes;
 pub mod extractors;
 pub mod models;
 pub mod service;
+pub mod api_doc;
+pub mod handler;
 
 #[tokio::main]
 async fn main()  {
     dotenv::dotenv().ok();
+
     let app_config = Arc::new(AppConfig::init()
         .expect("Failed to initialize app config"));
 
@@ -38,14 +47,37 @@ async fn main()  {
         .expect("Failed to migrate database");
 
     tracing::info!("Database migrated successfully");
+    
+    let mut discord_service = DiscordService::create(
+        &app_config.discord_bot_token,
+        u64::from_str(&app_config.discord_guild_id).unwrap(),
+        pool.clone()
+    ).await.expect("Failed to create Discord service");
+
+    let discord_http = discord_service.http();
+
+    tokio::spawn(async move {
+        if let Err(err) = discord_service.start().await {
+            tracing::error!("discord bot exited with error: {err:?}");
+        }
+    });
 
     let root_state = RootState::new(
         app_config.clone(),
-        pool);
+        pool,
+        discord_http
+    );
 
-    let app : Router = Router::new()
+    let api_router = Router::new()
         .route("/_health", get(get_health))
+        .nest("/api/guestbook", routes::guestbook::router())
         .with_state(root_state);
+
+    let mut app = api_router;
+
+    if app_config.enable_scalar {
+        app = app.merge(Scalar::with_url("/scalar", ApiDoc::openapi()));
+    }
 
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")

@@ -5,6 +5,7 @@ CREATE TABLE guestbook_entries (
                                    status     TEXT NOT NULL DEFAULT 'pending',
                                    likes      INTEGER NOT NULL DEFAULT 0,
                                    ip_hash    TEXT NOT NULL,
+                                   rejection_reason TEXT,
                                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
