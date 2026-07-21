@@ -1,7 +1,3 @@
-// guestbook.js
-// Alpine.js component for the guestbook column.
-// Phase 1: static seed data. Phase 2: wire to /api/guestbook.
-
 const ADJS  = ['anxious','sleepy','caffeinated','recursive','async',
                 'stochastic','idempotent','fuzzy','latent','verbose',
                 'silent','cursed','haunted','elegant','chaotic','stubborn','pensive'];
@@ -15,61 +11,39 @@ function genName() {
     + '-' + NOUNS[Math.floor(Math.random() * NOUNS.length)];
 }
 
-// ── Static seed entries (Phase 1 placeholder) ───────────────
-const SEED_ENTRIES = [
-  {
-    id: '001',
-    name: 'caffeinated-goblin',
-    date: '2025-06-12',
-    message: 'Redis 10s to under a second — I need to know more about how that actually worked.',
-    likes: 3,
-  },
-  {
-    id: '002',
-    name: 'recursive-daemon',
-    date: '2025-05-28',
-    message: 'The AGPL post saved me from a very bad licensing decision. Thank you.',
-    likes: 7,
-  },
-  {
-    id: '003',
-    name: 'latent-phantom',
-    date: '2025-05-01',
-    message: 'This is the terminal aesthetic done right. Most people get it wrong.',
-    likes: 4,
-  },
-  {
-    id: '004',
-    name: 'pensive-shard',
-    date: '2025-04-14',
-    message: 'Allotment post was unexpectedly moving. Backend engineer / gardener combo is rare.',
-    likes: 2,
-  },
-  {
-    id: '005',
-    name: 'async-wizard',
-    date: '2025-03-30',
-    message: 'Cork represent.',
-    likes: 1,
-  },
-];
+
+async function fetchEntries() {
+  const res = await fetch(`${CONFIG.API_BASE}/guestbook`);
+  const data = await res.json();
+  return (data?.entries ?? []).map(entry => ({
+    ...entry,
+    date: new Date(entry.created_at).toISOString().slice(0, 10),
+  }));
+}
 
 function guestbookComponent() {
+
+
   return {
-    entries: [...SEED_ENTRIES],
+    entries: [],
     authorName: genName(),
     message: '',
     pending: false,
-    pendingMsg: '',
-    liked: new Set(JSON.parse(localStorage.getItem(CONFIG.LIKED_KEY) || '[]')),
+    loading: true,
+
+    async init() {
+      await this.loadRemote();
+      this.loading = false;
+    },
+
+    async loadRemote() {
+      this.entries = await fetchEntries();
+    },
 
     reroll() {
       this.authorName = genName();
     },
 
-    isLiked(id) {
-      return this.liked.has(id);
-    },
 
     toggleLike(entry) {
       if (this.liked.has(entry.id)) {
@@ -102,12 +76,11 @@ function guestbookComponent() {
       this.pending = true;
       this.pendingMsg = '⟳ pending moderation';
 
-      // Phase 2: POST to /api/guestbook
-      // const res = await fetch(`${CONFIG.API_BASE}/api/guestbook`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name: this.authorName, message: msg }),
-      // });
+      const res = await fetch(`${CONFIG.API_BASE}/guestbook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: this.authorName, message: msg }),
+      });
 
       setTimeout(() => {
         this.pending = false;

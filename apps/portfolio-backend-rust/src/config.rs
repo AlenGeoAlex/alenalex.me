@@ -10,6 +10,7 @@ pub struct AppConfig {
     pub discord_bot_token: String,
     pub discord_guild_id: String,
     pub discord_channel_id: String,
+    pub allowed_origins: Vec<String>,
 }
 
 impl AppConfig {
@@ -22,6 +23,7 @@ impl AppConfig {
             discord_bot_token: get_required_string("DISCORD_BOT_TOKEN")?,
             discord_guild_id: get_required_string("DISCORD_GUILD_ID")?,
             discord_channel_id: get_required_string("DISCORD_CHANNEL_ID")?,
+            allowed_origins: get_list_of_strings("ALLOWED_ORIGINS", ",")?,
         })
     }
 }
@@ -67,4 +69,15 @@ fn get_bool_or_default(key: &str, default: bool) -> Result<bool> {
             }
         }
     }
+}
+
+fn get_list_of_strings(key: &str, sep: &str) -> Result<Vec<String>>
+{
+    match std::env::var(key) {
+        Ok(val) => {
+            Ok(val.split(sep).map(|s| s.to_string()).collect())
+        }
+        Err(err) => Err(err.into())
+    }
+        
 }

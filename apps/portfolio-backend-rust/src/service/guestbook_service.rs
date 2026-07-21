@@ -2,9 +2,11 @@ use crate::models::guestbook::{Guestbook, GuestbookStatus};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use nanoid::nanoid;
-use sqlx::{Pool, Sqlite};
+use sqlx::{Error, Pool, Sqlite};
 use sqlx::query::Query;
-use sqlx::sqlite::SqliteArguments;
+use sqlx::sqlite::{SqliteArguments, SqliteQueryResult};
+use crate::models::guestbook_likes::GuestbookLikes;
+use crate::service::guestbook_service::GuestbookLikeError::LikeAlreadyExists;
 
 pub async  fn create_entry(
     db_pool: &Pool<Sqlite>,
@@ -35,7 +37,7 @@ pub async fn list_entries(
     db_pool: &Pool<Sqlite>,
     ip_hash: &str
 ) -> Result<Vec<Guestbook>> {
-    let guestbooks : Vec<Guestbook> = sqlx::query_as("SELECT * FROM guestbook_entries WHERE (status = 'accepted') OR (status = '' AND ip_hash = ?)")
+    let guestbooks : Vec<Guestbook> = sqlx::query_as("SELECT * FROM guestbook_entries WHERE (status = 'accepted') OR (status = '' AND ip_hash = ?) ORDER BY created_at DESC")
         .bind(ip_hash)
         .fetch_all(db_pool)
         .await?;
@@ -99,6 +101,72 @@ async fn update_entry(
 
     if res.rows_affected() == 0 {
         return Err(anyhow!("No status update has been made"));
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum GuestbookLikeError {
+    #[error("Like already exists")]
+    LikeAlreadyExists,
+    
+    #[error("Like not found")]
+    LikeNotFound,
+    
+    #[error("Unknown error")]
+    UnknownError,
+}
+
+pub async fn like(
+    db_pool: &Pool<Sqlite>,
+    post_id: &str,
+    ip_hash: &str,
+) -> std::result::Result<GuestbookLikes, GuestbookLikeError> {
+    let guestbook_likes = GuestbookLikes {
+        entry_id: post_id.to_string(),
+        ip_hash: ip_hash.to_string(),
+        created_at: Utc::now(),
+    };
+    
+    let res = match sqlx::query("INSERT INTO guestbook_likes (entry_id, ip_hash, created_at) VALUES (?, ?, ?) ON CONFLICT(entry_id, ip_hash) DO NOTHING")
+        .bind(&guestbook_likes.entry_id)
+        .bind(&guestbook_likes.ip_hash)
+        .bind(&guestbook_likes.created_at)
+        .execute(db_pool)
+        .await {
+        Ok(data) => data,
+        Err(err) => {
+            return Err(GuestbookLikeError::UnknownError);
+        }
+    };
+    
+    if res.rows_affected() == 0 {
+        return Err(GuestbookLikeError::LikeAlreadyExists);
+    }
+
+    Ok(guestbook_likes)
+}
+
+pub async fn unlike(
+    db_pool: &Pool<Sqlite>,
+    post_id: &str,
+    ip_hash: &str
+) -> std::result::Result<(), GuestbookLikeError>
+{
+    let res = match sqlx::query("DELETE FROM guestbook_likes WHERE entry_id = ? AND ip_hash = ?")
+        .bind(post_id)
+        .bind(ip_hash)
+        .execute(db_pool)
+        .await {
+        Ok(data) => data,
+        Err(_) => {
+            return Err(GuestbookLikeError::UnknownError);
+        }
+    };
+    
+    if res.rows_affected() == 0 {
+        return Err(GuestbookLikeError::LikeNotFound);
     }
 
     Ok(())

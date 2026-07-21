@@ -50,39 +50,48 @@
                     class="col col-guestbook"
                     aria-label="Guestbook"
                     x-data="guestbookComponent()"
+                    x-init="init().catch(console.error)"
                 >
                     <div class="gb-header">// guestbook</div>
 
                     <div class="gb-stream">
-                        <template x-for="entry in entries" :key="entry.id">
-                            <article class="gb-entry">
-                                <div class="gb-entry-meta">
+                        <template x-if="loading" >
+                            <div class="gb-loading">
+                                <p>Loading guestbook…</p>
+                            </div>
+                        </template>
+
+
+                        <template x-if="!loading">
+                            <template x-for="entry in entries" :key="entry.id">
+                                <article class="gb-entry">
+                                    <div class="gb-entry-meta">
                                     <span
-                                        class="gb-entry-name"
-                                        x-text="entry.name"
+                                            class="gb-entry-name"
+                                            x-text="entry.name"
                                     ></span>
+                                        <span
+                                                class="gb-entry-date"
+                                                x-text="entry.date"
+                                        ></span>
+                                    </div>
+                                    <p
+                                            class="gb-entry-msg"
+                                            x-text="entry.message"
+                                            :class="{ 'c-dim': entry.is_pending }"
+                                    ></p>
+                                    <button
+                                            class="gb-entry-like"
+                                            @click="toggleLike(entry)"
+                                            :aria-label="'Like · ' + entry.like_count"
+                                    >
                                     <span
-                                        class="gb-entry-date"
-                                        x-text="entry.date"
+                                            x-text="entry.like_from_ip ? '▲' : '△'"
                                     ></span>
-                                </div>
-                                <p
-                                    class="gb-entry-msg"
-                                    x-text="entry.message"
-                                    :class="{ 'c-dim': entry.pending }"
-                                ></p>
-                                <button
-                                    class="gb-entry-like"
-                                    @click="toggleLike(entry)"
-                                    x-show="!entry.pending"
-                                    :aria-label="'Like · ' + entry.likes"
-                                >
-                                    <span
-                                        x-text="isLiked(entry.id) ? '▲' : '△'"
-                                    ></span>
-                                    <span x-text="entry.likes"></span>
-                                </button>
-                            </article>
+                                        <span x-text="entry.like_count"></span>
+                                    </button>
+                                </article>
+                            </template>
                         </template>
                     </div>
 

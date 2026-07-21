@@ -6,6 +6,9 @@ use utoipa::OpenApi;
         crate::routes::guestbook::create_entry_handler,
 
         crate::routes::guestbook::list_entries,
+
+        crate::routes::guestbook_likes::create_like,
+        crate::routes::guestbook_likes::delete_like,
     ),
     components(
         schemas(

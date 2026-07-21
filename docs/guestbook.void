@@ -57,7 +57,7 @@ content:
   - type: url
     attrs:
       uid: 687e9a56-8384-434c-abd5-de0a8ac8fea7
-    content: "{{API_URL}}/api/guestbook"
+    content: "{{API_URL}}/guestbook"
 ---
 ```
 %%EMPTY_LINE%%

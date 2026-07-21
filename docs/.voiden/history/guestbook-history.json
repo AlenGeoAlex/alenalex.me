@@ -1,0 +1,982 @@
+{
+  "version": "1.0.0",
+  "filePath": "/Users/alenalex/Work/Hobby/alenalex.me/docs/guestbook.void",
+  "entries": [
+    {
+      "id": "mrrkyvn5ulvn2",
+      "timestamp": 1784452539569,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 18.59999999962747,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 18.59999999962747,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 18.59999999962747
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyvhmpp6sb",
+      "timestamp": 1784452539370,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 14.700000001117587,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 14.700000001117587,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 14.700000001117587
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyvd8flrle",
+      "timestamp": 1784452539212,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 14.199999999254942,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 14.199999999254942,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 14.199999999254942
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyv80ufolr",
+      "timestamp": 1784452539024,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 16.09999999962747,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 16.09999999962747,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 16.09999999962747
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:39 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyv2w31pz6",
+      "timestamp": 1784452538840,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 22.299999998882413,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 22.299999998882413,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 22.299999998882413
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyuvykg484",
+      "timestamp": 1784452538590,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 25,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 25,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 25
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyugta1bas",
+      "timestamp": 1784452538045,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 25.700000001117587,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 25.700000001117587,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 25.700000001117587
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:38 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkyog3mzicr",
+      "timestamp": 1784452530243,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 200,
+        "statusText": "OK",
+        "error": null,
+        "duration": 29.100000001490116,
+        "bytesContent": 178
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "duration": 29.100000001490116,
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:30 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "contentType": "application/json",
+        "timing": {
+          "duration": 29.100000001490116
+        },
+        "bytesContent": 178,
+        "error": null,
+        "body": "{\n  \"entries\": [\n    {\n      \"name\": \"Saul.Haley\",\n      \"message\": \"This is a sad test\",\n      \"is_pending\": false,\n      \"created_at\": \"2026-07-18T13:39:36.985756Z\"\n    }\n  ]\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "128"
+          },
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:15:30 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkxxv0zpcav",
+      "timestamp": 1784452495788,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 400,
+        "statusText": "Bad Request",
+        "error": null,
+        "duration": 25.800000000745058,
+        "bytesContent": 27
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 400,
+        "statusText": "Bad Request",
+        "contentType": null,
+        "duration": 25.800000000745058,
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:55 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 400,
+        "statusText": "Bad Request",
+        "contentType": null,
+        "timing": {
+          "duration": 25.800000000745058
+        },
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:55 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkxdkbkum72",
+      "timestamp": 1784452469483,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 404,
+        "statusText": "Not Found",
+        "error": null,
+        "duration": 27,
+        "bytesContent": 27
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "duration": 27,
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:29 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "timing": {
+          "duration": 27
+        },
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:29 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkxcwststjo",
+      "timestamp": 1784452468636,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 404,
+        "statusText": "Not Found",
+        "error": null,
+        "duration": 22.59999999962747,
+        "bytesContent": 27
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "duration": 22.59999999962747,
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:28 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "timing": {
+          "duration": 22.59999999962747
+        },
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:14:28 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mrrkux1aqo4cb",
+      "timestamp": 1784452354750,
+      "pluginId": "voiden-rest-api",
+      "meta": {
+        "label": "GET http://localhost:8080/api/api/guestbook",
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "connectionMade": true,
+        "statusCode": 404,
+        "statusText": "Not Found",
+        "error": null,
+        "duration": 21.200000001117587,
+        "bytesContent": 27
+      },
+      "requestState": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "responseState": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "duration": 21.200000001117587,
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:12:34 GMT"
+          }
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8080/api/api/guestbook",
+        "headers": [],
+        "contentType": "none"
+      },
+      "response": {
+        "status": 404,
+        "statusText": "Not Found",
+        "contentType": null,
+        "timing": {
+          "duration": 21.200000001117587
+        },
+        "bytesContent": 27,
+        "error": null,
+        "body": "{\n  \"type\": \"Buffer\",\n  \"data\": []\n}",
+        "headers": [
+          {
+            "key": "connection",
+            "value": "close"
+          },
+          {
+            "key": "content-length",
+            "value": "0"
+          },
+          {
+            "key": "date",
+            "value": "Sun, 19 Jul 2026 09:12:34 GMT"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -17,7 +17,8 @@ const CONFIG = {
   CDN_BASE: "https://cdn.jsdelivr.net/gh/AlenGeoAlex/alenalex.me@main",
   GITHUB_API: "https://api.github.com",
 
-  API_BASE: "https://api.alenalex.me",
+  _API_BASE: "https://api.alenalex.me",
+  API_BASE: "http://localhost:8080/api",
 
   CACHE_GITHUB: 5 * 60 * 1000, // 5 min
   CACHE_BLOGSPEC: 5 * 60 * 1000, // 5 min

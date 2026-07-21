@@ -1,9 +1,11 @@
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
+use axum::http::{HeaderValue, Method};
 use axum::Router;
 use axum::ServiceExt;
 use axum::routing::get;
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 use crate::api_doc::ApiDoc;
@@ -20,6 +22,7 @@ pub mod models;
 pub mod service;
 pub mod api_doc;
 pub mod handler;
+pub mod utils;
 
 #[tokio::main]
 async fn main()  {
@@ -85,12 +88,22 @@ async fn main()  {
         .expect("failed to bind to port 8080");
 
     tracing::info!("listening on {}", listener.local_addr().unwrap());
+    let allowed_origins: Vec<HeaderValue> = app_config.allowed_origins
+        .iter()
+        .map(|s| s.parse::<HeaderValue>().unwrap())
+        .collect();
+
+
+    let cors = CorsLayer::new()
+        .allow_methods(Any)
+        .allow_headers(Any)
+        .allow_origin(allowed_origins);
 
     axum::serve(listener,
-                app.into_make_service_with_connect_info::<SocketAddr>(),
+                app.layer(cors)
+                    .into_make_service_with_connect_info::<SocketAddr>(),
     ).await.unwrap();
 }
-
 async fn get_health() -> &'static str {
     "OK"
 }
