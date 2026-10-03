@@ -15,9 +15,11 @@ export interface RevisionsDialogData {
   title: string;
   /** the ref being read right now, if previewing */
   current: string | null;
+  /** `revisions-since:` of the post: older commits aren't listed */
+  since: string | null;
 }
 
-/** Every commit that touched a post, loaded from the API when the modal opens. Picking one opens that version. */
+/** The commits that changed a post's text, loaded from the API when the modal opens. Picking one opens that version. */
 @Component({
   selector: 'app-revisions-dialog',
   imports: [OfflineNoticeComponent],
@@ -41,7 +43,7 @@ export class RevisionsDialogComponent {
   protected async load(): Promise<void> {
     this.revisions.set(remoteLoading());
     try {
-      this.revisions.set(remoteReady(await this.api.revisions(this.data.folder)));
+      this.revisions.set(remoteReady(await this.api.revisions(this.data.folder, this.data.since)));
     } catch (e) {
       this.revisions.set(remoteOffline((e as ApiError).reason));
     }

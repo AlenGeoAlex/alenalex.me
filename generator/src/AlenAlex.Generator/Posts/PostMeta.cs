@@ -4,6 +4,7 @@ using YamlDotNet.Serialization;
 namespace AlenAlex.Generator.Posts;
 
 /// <param name="Part">Position inside a series (<c>part:</c>); only meaningful for series parts.</param>
+/// <param name="RevisionsSince"><c>revisions-since:</c> the revisions list on the site starts at this day.</param>
 /// <param name="AiAssist"><c>ai-assist:</c> whether AI helped write the post; <c>null</c> when not stated.</param>
 internal sealed record PostMeta(
     string Title,
@@ -17,7 +18,8 @@ internal sealed record PostMeta(
     string? OgImageAsset,
     string? Slug,
     int? Part = null,
-    bool? AiAssist = null)
+    bool? AiAssist = null,
+    DateOnly? RevisionsSince = null)
 {
     /// <summary><c>slug</c> from .meta, else the slugified title.</summary>
     public string EffectiveSlug => Slug ?? Slugifier.Slugify(Title);
@@ -56,6 +58,9 @@ internal sealed class MetaFields
 
     public string? Slug { get; set; }
 
+    [YamlMember(Alias = "revisions-since", ApplyNamingConventions = false)]
+    public string? RevisionsSince { get; set; }
+
     /// <summary>Kept as text for the same reason as <see cref="Published"/>.</summary>
     [YamlMember(Alias = "ai-assist", ApplyNamingConventions = false)]
     public string? AiAssist { get; set; }
@@ -72,7 +77,7 @@ internal static class PostMetaReader
 {
     private static readonly HashSet<string> KnownKeys = new(StringComparer.Ordinal)
     {
-        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist",
+        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist", "revisions-since",
     };
 
     public static PostMetaResult Read(string metaText, string metaPath)
@@ -86,6 +91,7 @@ internal static class PostMetaReader
         var tags = context.Tags(fields.Tags);
         var slug = context.Slug(fields.Slug);
         var aiAssist = context.OptionalBool(fields.AiAssist, "ai-assist");
+        var revisionsSince = context.OptionalDate(fields.RevisionsSince, "revisions-since");
 
         var type = MetaReadContext.NullIfEmpty(fields.Type);
         if (type is not null and not "markdown" and not "html")
@@ -111,7 +117,8 @@ internal static class PostMetaReader
                 OgImageAsset: MetaReadContext.NullIfEmpty(fields.OgImageAsset),
                 Slug: slug,
                 Part: part,
-                AiAssist: aiAssist)
+                AiAssist: aiAssist,
+                RevisionsSince: revisionsSince)
             : null;
 
         if (meta is { Slug: null } && meta.EffectiveSlug.Length == 0)

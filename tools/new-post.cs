@@ -480,6 +480,11 @@ static class Help
             New images show up in a local preview only after they're uploaded ([grey]sync[/], or push and let CI do it).
             Use [blue]og_image_asset: cover.png[/] in .meta for the picture shown in link previews.
             """),
+        new("revisions", "What the revisions list shows", """
+            The [bold]revisions[/] button on a post lists the commits that changed its [blue]index.md[/]. Commits that only touch .meta or assets/ aren't listed.
+              [grey]•[/] Put [blue][[skip rev]][/] anywhere in a commit message to leave that commit out (still on GitHub, just not listed).
+              [grey]•[/] [blue]revisions-since: 2026-10-03[/] in .meta starts the list at that day, so the drafting before release isn't shown.
+            """),
         new("workflow", "Writing, previewing, shipping", """
               [grey]1.[/] [bold]create[/]    dotnet run tools/new-post.cs
               [grey]2.[/] [bold]write[/]     edit index.md, add images to assets/

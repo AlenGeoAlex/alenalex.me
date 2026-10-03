@@ -12,9 +12,13 @@ export class PostsApiService {
   private readonly remote = inject(RemoteService);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /** `folder` is the repo path under blogs/: "<folder>" or "<series>/<part>". */
-  async revisions(folder: string): Promise<PostRevision[]> {
-    const { revisions } = await this.remote.get<{ revisions: PostRevision[] }>(`/api/posts/${this.segments(folder)}/revisions`);
+  /**
+   * `folder` is the repo path under blogs/: "<folder>" or "<series>/<part>".
+   * `since` (YYYY-MM-DD) leaves out older commits; commits with [skip rev] in the message are left out by the API.
+   */
+  async revisions(folder: string, since?: string | null): Promise<PostRevision[]> {
+    const query = since ? `?since=${encodeURIComponent(since)}` : '';
+    const { revisions } = await this.remote.get<{ revisions: PostRevision[] }>(`/api/posts/${this.segments(folder)}/revisions${query}`);
     return revisions;
   }
 

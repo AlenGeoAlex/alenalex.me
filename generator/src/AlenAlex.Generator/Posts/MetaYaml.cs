@@ -33,11 +33,17 @@ internal sealed partial class MetaReadContext(string path, IReadOnlyDictionary<s
 
     public DateOnly? RequiredDate(string? value, string key = "date")
     {
-        if (NullIfEmpty(value) is not { } raw)
+        if (NullIfEmpty(value) is null)
         {
             Error($"missing or empty required `{key}` (YYYY-MM-DD)", key);
             return null;
         }
+        return OptionalDate(value, key);
+    }
+
+    public DateOnly? OptionalDate(string? value, string key)
+    {
+        if (NullIfEmpty(value) is not { } raw) return null;
 
         if (DatePattern().IsMatch(raw)
             && DateOnly.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))

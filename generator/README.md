@@ -44,7 +44,7 @@ For every folder with a `.meta` (drafts included, shown as `draft`):
 | Check | Severity |
 |---|---|
 | `.meta` parses (and would parse in the site's YAML parser: e.g. an unquoted value containing `: ` or a duplicate key is an error) | error |
-| `title` present; `date` is a real `YYYY-MM-DD` date | error |
+| `title` present; `date` (and `revisions-since`, if set) is a real `YYYY-MM-DD` date | error |
 | `tags`, if present, is a list of strings; `published` and `ai-assist` are `true`/`false`; `type` is `markdown`/`html`; `slug`, if set, is `lower-case-with-dashes` | error |
 | `index.md` exists | error |
 | every `assets/x` / `./assets/x` in markdown images, inline links and reference definitions exists in `assets/` (exact case: R2 and Linux are case-sensitive; code blocks are ignored) | error |

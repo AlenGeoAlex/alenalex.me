@@ -67,6 +67,9 @@
             <li class="px-3 py-2 text-(--r-ink-3)">no history found.</li>
           }
         </ol>
+        @if (data.since) {
+          <p class="mt-6 mb-0 pl-8 text-xs text-(--r-ink-3)">listed from {{ data.since }}. the drafting before that isn't.</p>
+        }
       }
     }
   </div>

@@ -66,6 +66,13 @@ function parseCommon(meta, file) {
   };
 }
 
+function parseOptionalDate(value, key, file) {
+  if (value === undefined || value === null || value === '') return null;
+  const date = value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`blogs/${file} has a bad "${key}": ${value}`);
+  return date;
+}
+
 /** `.meta` is YAML (`key: value`, arrays as JSON). */
 function parseMeta(raw, file) {
   const meta = parseYaml(raw) ?? {};
@@ -78,6 +85,8 @@ function parseMeta(raw, file) {
     ogImageAsset: meta.og_image_asset ? String(meta.og_image_asset) : null,
     // whether AI helped write it; null when the post doesn't say
     aiAssist: typeof meta['ai-assist'] === 'boolean' ? meta['ai-assist'] : null,
+    // the revisions list starts at this day (earlier commits are drafting noise)
+    revisionsSince: parseOptionalDate(meta['revisions-since'], 'revisions-since', file),
     part,
   };
 }

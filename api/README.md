@@ -30,7 +30,7 @@ src/AlenAlex.Api/
       RefreshSummary/             background job (every 15 min) + GraphQL client
       Shared/                     summary model + store, HttpClient setup
     Posts/
-      GetRevisions/               GET /api/posts/{folder}/revisions, /api/posts/{series}/{part}/revisions
+      GetRevisions/               GET /api/posts/{folder}/revisions?since=, /api/posts/{series}/{part}/revisions?since=
       GetSource/                  GET /api/posts/{folder}/source?ref=, /api/posts/{series}/{part}/source?ref=
       GetAsset/                   GET /api/posts/{folder}/assets/{file}?ref=, /api/posts/{series}/{part}/assets/{file}?ref=
       Shared/                     PostPath (folder or series/part), GitHub REST content client, cache, validation, errors
@@ -194,7 +194,7 @@ Responses are JSON with camelCase fields; errors are `{ "error": "..." }`.
 | DELETE | `/api/guestbook/{id}/likes` | `200 { likeCount, liked: false }`, idempotent; `404` unless accepted |
 | GET | `/api/github` | Cached summary, refreshed every 15 min; `503 {"error":"warming up"}` until the first fetch |
 | GET | `/api/status` | Discord presence, Spotify track, homelab health |
-| GET | `/api/posts/{folder}/revisions` | `{ revisions: [{ sha, shortSha, date, message, url }] }`, newest first, max 30, cached 10 min |
+| GET | `/api/posts/{folder}/revisions?since=` | `{ revisions: [{ sha, shortSha, date, message, url }] }`: commits that changed `index.md`, newest first, max 30, cached 10 min. Commits with `[skip rev]` in the message are left out; `since` (`YYYY-MM-DD`, optional) drops older ones |
 | GET | `/api/posts/{folder}/source?ref=` | `{ ref, meta, markdown }` (raw `.meta` + `index.md`); `ref` defaults to `main` |
 | GET | `/api/posts/{folder}/assets/{file}?ref=` | Raw image bytes (png/jpg/jpeg/gif/webp/svg/avif, max 10 MB). Also series-level assets: `/api/posts/{series}/assets/cover.png` |
 | GET | `/api/posts/{series}/{part}/revisions` | Same as above, for a part of a series (`blogs/{series}/{part}`) |

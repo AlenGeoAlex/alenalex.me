@@ -3,7 +3,8 @@ import { parse as parseYaml } from 'yaml';
 import { Post, PostSummary } from '@core/models/post.model';
 
 /** Where the previewed post sits in the site: its URL and series context (from the built index). */
-export type PreviewPlacement = Pick<PostSummary, 'no' | 'path' | 'series' | 'partIndex' | 'partCount'>;
+/** What a preview keeps from the current version of the post (the revisions list belongs to the post, not the old version). */
+export type PreviewPlacement = Pick<PostSummary, 'no' | 'path' | 'series' | 'partIndex' | 'partCount' | 'revisionsSince'>;
 import { PostsApiService } from './posts-api.service';
 import { MarkdownService } from './markdown.service';
 

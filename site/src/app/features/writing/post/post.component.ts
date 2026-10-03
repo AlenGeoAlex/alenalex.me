@@ -58,6 +58,7 @@ export class PostComponent {
           series: base?.series ?? null,
           partIndex: base?.partIndex ?? null,
           partCount: base?.partCount ?? null,
+          revisionsSince: base?.revisionsSince ?? null,
         });
       }
       return this.summary() || this.draft() ? this.content.post(params.path) : null;
@@ -83,7 +84,7 @@ export class PostComponent {
     const folder = this.folder();
     if (!folder) return;
     this.dialog.open<void, RevisionsDialogData>(RevisionsDialogComponent, {
-      data: { folder, path: this.path(), title, current: this.preview() ?? null },
+      data: { folder, path: this.path(), title, current: this.preview() ?? null, since: this.post.value()?.revisionsSince ?? null },
       ariaLabelledBy: 'revisions-title',
       backdropClass: ['bg-black/55', 'backdrop-blur-[2px]'],
       autoFocus: 'dialog',

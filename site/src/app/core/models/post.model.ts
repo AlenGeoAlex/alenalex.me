@@ -15,6 +15,8 @@ export interface PostSummary {
   readingMinutes: number;
   /** `ai-assist:` from .meta: whether AI helped write it; null when not stated */
   aiAssist: boolean | null;
+  /** `revisions-since:` from .meta (YYYY-MM-DD): the revisions list starts at this day */
+  revisionsSince: string | null;
   series: SeriesRef | null;
   /** `part:` from .meta, if set */
   part: number | null;
