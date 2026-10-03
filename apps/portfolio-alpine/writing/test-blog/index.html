@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>How did I use GitHub as CMS?</title>
+        <meta name="description" content="This is a test blog." />
+        <meta property="og:title" content="How did I use GitHub as CMS?" />
+        <meta property="og:description" content="This is a test blog." />
+        <meta property="og:type" content="article" />
+        <meta
+            property="og:url"
+            content="https://alenalex.me/writing/test-blog/"
+        />
+        <meta
+            property="og:image"
+            content="https://assets.alenalex.me/assets/hotlink-ok/default_og.png"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="How did I use GitHub as CMS?" />
+        <meta name="twitter:description" content="This is a test blog." />
+        <link rel="canonical" href="https://alenalex.me/writing/test-blog/" />
+
+        <link rel="stylesheet" href="/styles/tokens.css" />
+        <link rel="stylesheet" href="/styles/base.css" />
+        <link rel="stylesheet" href="/styles/post.css" />
+
+        <link
+            id="prism-dark"
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css"
+        />
+        <link
+            id="prism-light"
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-solarizedlight.min.css"
+            disabled
+        />
+    </head>
+    <body>
+        <div class="post-page" data-slug="test-blog">
+            <div
+                class="post-draft-banner"
+                id="draft-banner"
+                style="display: none"
+            >
+                [DRAFT] c865d4b9b7 · not published · previewing github@<span
+                    id="preview-sha"
+                ></span>
+            </div>
+
+            <article class="post-content-wrap">
+                <span class="post-icon">⚗️</span>
+                <h1 class="post-title">How did I use GitHub as CMS?</h1>
+
+                <div class="post-byline">
+                    <span>2024-10-24</span>
+                    <span class="post-sb-sep">·</span>
+                    <span>c865d4b9b7</span>
+                    <span class="post-sb-sep">·</span>
+                    <div class="post-byline-tags">
+                        <span class="post-byline-tag">security</span>
+<span class="post-byline-tag">open-source</span>
+<span class="post-byline-tag">backend</span>
+                    </div>
+                </div>
+
+                <div class="post-body"><h2>Test Blog</h2>
+<p>This is a test blog.</p>
+<h3>This is title 3</h3>
+<p>So here is what you are gonna see it</p>
+<blockquote>
+<p>This is a quote</p>
+</blockquote>
+<pre><code class="language-sql">SELECT * FROM users; // 123
+</code></pre>
+<p><img src="https://assets.alenalex.me/assets/hotlink-ok/test-blog/rustlogo.png" alt="This is a rust logo" /></p>
+</div>
+
+                <div class="post-revisions">
+                    <button class="post-revisions-toggle" id="revisions-toggle">
+                        <span class="post-revisions-chevron">›</span>
+                        revisions (<span id="revisions-count">…</span>)
+                    </button>
+                    <div class="post-revisions-list" id="revisions-list"></div>
+                </div>
+            </article>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/prism.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-csharp.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-rust.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-sql.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-yaml.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-docker.min.js"></script>
+
+        <script src="/src/config.js"></script>
+        <script src="/src/layout.js"></script>
+        <script src="/src/post.js"></script>
+
+        <script>
+            mountPostLayout({ hash: "c865d4b9b7", date: "2024-10-24" });
+
+            (function () {
+                const sha = new URLSearchParams(window.location.search).get(
+                    "preview",
+                );
+                if (sha) {
+                    const banner = document.getElementById("draft-banner");
+                    const shaEl = document.getElementById("preview-sha");
+                    if (banner) banner.style.display = "block";
+                    if (shaEl) shaEl.textContent = sha;
+                }
+            })();
+        </script>
+    </body>
+</html>
