@@ -71,6 +71,17 @@ public class MetaParsingTests
     }
 
     [Theory]
+    [InlineData("", null)]
+    [InlineData("ai-assist: true\n", true)]
+    [InlineData("ai-assist: false\n", false)]
+    public void Ai_assist_is_optional(string line, bool? expected)
+    {
+        var result = Read("title: T\ndate: 2024-01-01\n" + line);
+        Assert.False(result.HasErrors, Errors(result));
+        Assert.Equal(expected, result.Meta!.AiAssist);
+    }
+
+    [Theory]
     [InlineData("date: 2024-01-01\n", "missing or empty required `title`")]
     [InlineData("title: \"\"\ndate: 2024-01-01\n", "missing or empty required `title`")]
     [InlineData("title: T\n", "missing or empty required `date`")]
@@ -80,6 +91,7 @@ public class MetaParsingTests
     [InlineData("title: T\ndate: 2024-01-01\ntags: rust\n", "`tags` must be a list of strings")]
     [InlineData("title: T\ndate: 2024-01-01\ntags: [[\"a\"]]\n", "`tags` must be a list of strings")]
     [InlineData("title: T\ndate: 2024-01-01\npublished: yes\n", "`published` must be `true` or `false`")]
+    [InlineData("title: T\ndate: 2024-01-01\nai-assist: a bit\n", "`ai-assist` must be `true` or `false`")]
     [InlineData("title: Part 1: Intro\ndate: 2024-01-01\n", "must be quoted")]
     [InlineData("title: T\ntitle: U\ndate: 2024-01-01\n", "duplicate key `title`")]
     [InlineData("title: \"T\ndate: 2024-01-01\n", "double-quoted scalar")]

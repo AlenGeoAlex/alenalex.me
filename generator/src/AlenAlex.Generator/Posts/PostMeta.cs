@@ -4,6 +4,7 @@ using YamlDotNet.Serialization;
 namespace AlenAlex.Generator.Posts;
 
 /// <param name="Part">Position inside a series (<c>part:</c>); only meaningful for series parts.</param>
+/// <param name="AiAssist"><c>ai-assist:</c> whether AI helped write the post; <c>null</c> when not stated.</param>
 internal sealed record PostMeta(
     string Title,
     string? PageTitle,
@@ -15,7 +16,8 @@ internal sealed record PostMeta(
     string? Excerpt,
     string? OgImageAsset,
     string? Slug,
-    int? Part = null)
+    int? Part = null,
+    bool? AiAssist = null)
 {
     /// <summary><c>slug</c> from .meta, else the slugified title.</summary>
     public string EffectiveSlug => Slug ?? Slugifier.Slugify(Title);
@@ -54,6 +56,10 @@ internal sealed class MetaFields
 
     public string? Slug { get; set; }
 
+    /// <summary>Kept as text for the same reason as <see cref="Published"/>.</summary>
+    [YamlMember(Alias = "ai-assist", ApplyNamingConventions = false)]
+    public string? AiAssist { get; set; }
+
     /// <summary>Kept as text so a non-number gets a clear message instead of a YAML type error.</summary>
     public string? Part { get; set; }
 }
@@ -66,7 +72,7 @@ internal static class PostMetaReader
 {
     private static readonly HashSet<string> KnownKeys = new(StringComparer.Ordinal)
     {
-        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part",
+        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist",
     };
 
     public static PostMetaResult Read(string metaText, string metaPath)
@@ -79,6 +85,7 @@ internal static class PostMetaReader
         var published = context.Published(fields.Published);
         var tags = context.Tags(fields.Tags);
         var slug = context.Slug(fields.Slug);
+        var aiAssist = context.OptionalBool(fields.AiAssist, "ai-assist");
 
         var type = MetaReadContext.NullIfEmpty(fields.Type);
         if (type is not null and not "markdown" and not "html")
@@ -103,7 +110,8 @@ internal static class PostMetaReader
                 Excerpt: MetaReadContext.NullIfEmpty(fields.Excerpt),
                 OgImageAsset: MetaReadContext.NullIfEmpty(fields.OgImageAsset),
                 Slug: slug,
-                Part: part)
+                Part: part,
+                AiAssist: aiAssist)
             : null;
 
         if (meta is { Slug: null } && meta.EffectiveSlug.Length == 0)

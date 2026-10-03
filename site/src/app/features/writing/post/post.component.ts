@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, resource } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, inject, input, resource, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ContentService } from '@core/services/content.service';
+import { DiagramService } from '@core/services/diagram.service';
 import { PostPreviewService } from '@core/services/post-preview.service';
 import { Dialog } from '@angular/cdk/dialog';
 import { ReaderThemeService } from '@core/services/reader-theme.service';
@@ -9,6 +11,7 @@ import { Post, PostSummary } from '@core/models/post.model';
 import { CatalogNoPipe } from '@shared/pipes/catalog-no.pipe';
 import { ParticleGlobeComponent } from '@shared/components/particle-globe/particle-globe.component';
 import { TagChipComponent } from '@shared/components/tag-chip/tag-chip.component';
+import { AiNoteComponent } from '@shared/components/ai-note/ai-note.component';
 import { RevisionsDialogComponent, RevisionsDialogData } from '../components/revisions-dialog/revisions-dialog.component';
 
 /**
@@ -18,7 +21,7 @@ import { RevisionsDialogComponent, RevisionsDialogData } from '../components/rev
  */
 @Component({
   selector: 'app-post',
-  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent],
+  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent, AiNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './post.component.html',
 })
@@ -32,6 +35,9 @@ export class PostComponent {
   private readonly previews = inject(PostPreviewService);
   private readonly dialog = inject(Dialog);
   private readonly seo = inject(SeoService);
+  private readonly diagrams = inject(DiagramService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly body = viewChild<ElementRef<HTMLElement>>('body');
   protected readonly reader = inject(ReaderThemeService);
 
   protected readonly summary = computed(() => this.content.summary(this.path()));
@@ -58,6 +64,13 @@ export class PostComponent {
     },
   });
 
+  /**
+   * The post body is rendered from this repo's own markdown (at build time, or from a ref of the repo
+   * for previews), so it's trusted. Angular's sanitizer would otherwise strip the heading ids the
+   * contents links point at.
+   */
+  protected readonly html = computed<SafeHtml>(() => this.sanitizer.bypassSecurityTrustHtml(this.post.value()?.html ?? ''));
+
   /** The published parts of this post's series, in reading order (empty for standalone posts). */
   protected readonly seriesParts = computed<PostSummary[]>(() => {
     const series = this.post.value()?.series;
@@ -78,6 +91,13 @@ export class PostComponent {
   }
 
   constructor() {
+    // runs in the browser only, after the post's HTML is in the DOM
+    afterRenderEffect(() => {
+      const body = this.body()?.nativeElement;
+      const theme = this.reader.theme();
+      if (body && this.post.value()) void this.diagrams.render(body, theme);
+    });
+
     effect(() => {
       const post = this.post.value();
       if (post && !this.preview()) {

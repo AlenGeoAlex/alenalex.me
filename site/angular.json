@@ -29,6 +29,7 @@
             ],
             "server": "src/main.server.ts",
             "outputMode": "static",
+            "allowedCommonJsDependencies": ["@braintree/sanitize-url", "dayjs", "cytoscape-cose-bilkent", "cytoscape-fcose", "elkjs"],
             "security": {
               "allowedHosts": []
             }

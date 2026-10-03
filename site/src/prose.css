@@ -38,8 +38,8 @@
   color: var(--r-ink);
   font-variant-numeric: oldstyle-nums proportional-nums;
 }
+.prose > * { margin-block: 0; }
 .prose > * + * { margin-top: 1.1em; }
-.prose p { margin: 0; }
 .prose h2,
 .prose h3 {
   font-family: var(--font-mono);
@@ -105,3 +105,8 @@
   .prose { font-size: 1.15rem; }
 }
 .prose > :first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+.prose .diagram { margin-inline: 0; padding: 1.25rem; overflow-x: auto; border: 1px solid var(--r-rule); text-align: center; }
+.prose .diagram svg { max-width: 100%; height: auto; }
+.prose .diagram pre.mermaid { margin: 0; text-align: left; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.5; color: var(--r-ink-3); white-space: pre; }
+.prose .diagram-error { border-color: var(--r-warn); }

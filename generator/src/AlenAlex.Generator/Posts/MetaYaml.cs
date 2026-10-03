@@ -60,6 +60,20 @@ internal sealed partial class MetaReadContext(string path, IReadOnlyDictionary<s
         }
     }
 
+    /// <summary>A true/false flag that may be left out (<c>null</c>).</summary>
+    public bool? OptionalBool(string? value, string key)
+    {
+        switch (value)
+        {
+            case null or "": return null;
+            case "true" or "True" or "TRUE": return true;
+            case "false" or "False" or "FALSE": return false;
+            default:
+                Error($"`{key}` must be `true` or `false`, got `{value}`", key);
+                return null;
+        }
+    }
+
     public IReadOnlyList<string> Tags(List<string>? tags)
     {
         if (tags?.Any(string.IsNullOrWhiteSpace) == true) Error("`tags` must not contain empty values", "tags");

@@ -13,6 +13,8 @@ export interface PostSummary {
   folder: string;
   ogImage: string | null;
   readingMinutes: number;
+  /** `ai-assist:` from .meta: whether AI helped write it; null when not stated */
+  aiAssist: boolean | null;
   series: SeriesRef | null;
   /** `part:` from .meta, if set */
   part: number | null;

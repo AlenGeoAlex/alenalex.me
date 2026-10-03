@@ -69,6 +69,9 @@
         <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-(--r-ink-3)">
           <span>filed <time class="text-(--r-ink)" [attr.datetime]="post.date">{{ post.date }}</time></span>
           <span><span class="text-(--r-ink)">{{ post.readingMinutes }} min</span> read</span>
+          @if (post.aiAssist !== null) {
+            <app-ai-note [assisted]="post.aiAssist" />
+          }
           @if (post.tags.length) {
             <ul class="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Tags">
               @for (tag of post.tags; track tag) {
@@ -92,7 +95,7 @@
       }
 
       <div class="grid grid-cols-1 gap-x-[clamp(2rem,6vw,6rem)] gap-y-10 pt-10" [class]="post.headings.length > 1 || seriesParts().length ? 'lg:grid-cols-[minmax(0,1fr)_17rem] xl:grid-cols-[minmax(0,1fr)_19rem]' : ''">
-        <div class="prose" [innerHTML]="post.html"></div>
+        <div #body class="prose" [innerHTML]="html()"></div>
 
         @if (post.headings.length > 1 || seriesParts().length) {
         <aside class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:self-start lg:border-l lg:border-(--r-rule) lg:pl-8">

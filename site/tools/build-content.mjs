@@ -42,6 +42,10 @@ const ASSET_BASE = 'https://assets.alenalex.me/assets/hotlink-ok';
 const slugify = (s) =>
   s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_-]+/g, '-');
 
+/** Undoes the escaping marked applies to text, for heading text that's shown as plain text. */
+const decodeEntities = (s) =>
+  s.replace(/&(amp|lt|gt|quot|#39);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[e]);
+
 const escapeXml = (s) =>
   s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]);
 
@@ -72,6 +76,8 @@ function parseMeta(raw, file) {
     pageTitle: meta['page-title'] ? String(meta['page-title']) : null,
     excerpt: meta.excerpt ? String(meta.excerpt) : null,
     ogImageAsset: meta.og_image_asset ? String(meta.og_image_asset) : null,
+    // whether AI helped write it; null when the post doesn't say
+    aiAssist: typeof meta['ai-assist'] === 'boolean' ? meta['ai-assist'] : null,
     part,
   };
 }
@@ -119,6 +125,8 @@ async function renderPost(dir, folder, meta, render) {
 const byPartOrder = (a, b) =>
   (a.part ?? Infinity) - (b.part ?? Infinity) || a.date.localeCompare(b.date) || a.slug.localeCompare(b.slug);
 
+const MERMAID_LANGS = new Set(['mermaid', 'mmd']);
+
 async function main() {
   const highlighter = await createHighlighter({
     themes: ['github-dark-default', 'github-light'],
@@ -134,6 +142,8 @@ async function main() {
       renderer: {
         code({ text, lang }) {
           const language = (lang ?? '').split(/\s/)[0].toLowerCase();
+          // drawn in the browser by DiagramService; the source shows as-is until then
+          if (MERMAID_LANGS.has(language)) return `<figure class="diagram"><pre class="mermaid">${escapeXml(text)}</pre></figure>`;
           // both themes are emitted as CSS variables; the reader's light/dark toggle picks one
           const html = highlighter.codeToHtml(text, {
             lang: loaded.has(language) ? language : 'text',
@@ -151,8 +161,9 @@ async function main() {
         },
         heading({ tokens, depth }) {
           const text = this.parser.parseInline(tokens);
-          const id = slugify(text.replace(/<[^>]+>/g, ''));
-          if (depth <= 3) headings.push({ id, depth, text: text.replace(/<[^>]+>/g, '') });
+          const plain = decodeEntities(text.replace(/<[^>]+>/g, ''));
+          const id = slugify(plain);
+          if (depth <= 3) headings.push({ id, depth, text: plain });
           return `<h${depth} id="${id}">${text}</h${depth}>`;
         },
         link({ href, title, tokens }) {

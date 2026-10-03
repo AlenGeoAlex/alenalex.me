@@ -186,6 +186,7 @@ static class Prompts
         var date = AskDate();
         var tags = AskTags();
         var excerpt = AnsiConsole.Prompt(new TextPrompt<string>("Excerpt [grey](one line; empty = first paragraph)[/]:").AllowEmpty());
+        var aiAssist = AnsiConsole.Confirm("Is AI helping with this one? [grey](shown on the post as ai-assisted or no ai; change it in .meta later)[/]", defaultValue: false);
         // Parts are published in reading order: if an earlier part is still a draft, this one must be too.
         var earlierDraft = isPart
             ? series!.Parts.Where(p => !p.Published && (p.Part is null || p.Part < part)).OrderBy(p => p.Part ?? int.MaxValue).FirstOrDefault()
@@ -210,6 +211,7 @@ static class Prompts
             .RawIf(part is not null, "part", part?.ToString(CultureInfo.InvariantCulture))
             .ListIf(tags.Count > 0, "tags", tags)
             .TextIf(excerpt.Length > 0, "excerpt", excerpt)
+            .Raw("ai-assist", aiAssist ? "true" : "false")
             .TextIf(slug != Slug.From(title), "slug", slug)
             .ToString();
 
@@ -464,6 +466,10 @@ static class Help
               [grey]•[/] A draft [bold]series[/] keeps every one of its parts a draft.
               [grey]•[/] Parts go live [bold]in order[/]: a part can't be published while an earlier part is a draft. The validator and the site build both refuse it.
             To publish: set [blue]published: true[/] and push to main.
+            """),
+        new("ai", "Saying whether AI helped", """
+            [blue]ai-assist: true[/] puts an [bold]ai-assisted[/] mark next to the reading time, with a tooltip saying AI was used in some capacity to write the post.
+            [blue]ai-assist: false[/] shows [bold]no ai[/] instead. Leave the key out and nothing is shown.
             """),
         new("names", "Slugs and folders", """
             The [bold]slug[/] is the URL. It defaults to the title in lowercase with dashes ("Why I rewrote it" → [grey]why-i-rewrote-it[/]); change it with [blue]slug:[/] in .meta.

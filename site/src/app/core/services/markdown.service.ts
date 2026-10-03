@@ -23,8 +23,9 @@ export class MarkdownService {
       renderer: {
         heading({ tokens, depth }) {
           const text = this.parser.parseInline(tokens);
-          const id = slugify(text);
-          if (depth <= 3) headings.push({ id, depth, text: text.replace(/<[^>]+>/g, '') });
+          const plain = new DOMParser().parseFromString(text, 'text/html').body.textContent ?? '';
+          const id = slugify(plain);
+          if (depth <= 3) headings.push({ id, depth, text: plain });
           return `<h${depth} id="${id}">${text}</h${depth}>`;
         },
         image({ href, text }) {
@@ -33,8 +34,9 @@ export class MarkdownService {
         },
         code({ text, lang }) {
           const language = (lang ?? '').split(/\s/)[0];
-          const label = language ? `<span class="code-lang">${language}</span>` : '';
           const escaped = text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
+          if (language === 'mermaid' || language === 'mmd') return `<figure class="diagram"><pre class="mermaid">${escaped}</pre></figure>`;
+          const label = language ? `<span class="code-lang">${language}</span>` : '';
           return `<figure class="code">${label}<pre class="shiki"><code>${escaped}</code></pre></figure>`;
         },
       },

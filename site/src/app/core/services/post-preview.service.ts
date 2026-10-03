@@ -35,6 +35,7 @@ export class PostPreviewService {
         tags: Array.isArray(meta['tags']) ? meta['tags'].map(String) : [],
         excerpt: meta['excerpt'] ? String(meta['excerpt']) : null,
         ogImage: null,
+        aiAssist: typeof meta['ai-assist'] === 'boolean' ? meta['ai-assist'] : null,
         readingMinutes: Math.max(1, Math.round(words / 220)),
         headings,
         html,
