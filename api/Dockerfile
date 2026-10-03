@@ -24,15 +24,17 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     && dotnet restore src/AlenAlex.Api/AlenAlex.Api.csproj -r "$RID"
 
 COPY src/ src/
+# No --no-restore: the cache mount isn't part of the image, so on a fresh CI runner the restore
+# layer above can come from the layer cache while the mount is empty. Publish restores what's missing.
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     RID=linux-$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) \
-    && dotnet publish src/AlenAlex.Api/AlenAlex.Api.csproj -c Release -r "$RID" --no-restore -o /app \
+    && dotnet publish src/AlenAlex.Api/AlenAlex.Api.csproj -c Release -r "$RID" -o /app \
     && rm -f /app/*.dbg /app/*.staticwebassets.endpoints.json
 
 # Runtime
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled AS final
 LABEL org.opencontainers.image.source="https://github.com/AlenGeoAlex/alenalex.me" \
-      org.opencontainers.image.description="alenalex.me API: guestbook, live status, post history"
+      org.opencontainers.image.description="alenalex.me API"
 WORKDIR /app
 COPY --from=build /app ./
 
