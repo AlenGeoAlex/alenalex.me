@@ -53,7 +53,7 @@
 .prose h3::before { content: '### '; color: var(--r-ink-3); }
 .prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
 .prose a { color: inherit; text-decoration-color: var(--r-accent); }
-.prose strong { font-weight: 500; }
+.prose strong { font-weight: 600; }
 .prose blockquote {
   margin-inline: 0;
   padding: 0.2em 0 0.2em 1.2em;
@@ -62,6 +62,11 @@
   font-style: italic;
 }
 .prose ul, .prose ol { padding-left: 1.3em; }
+/* Tailwind's reset removes list markers everywhere */
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose ul ul { list-style: circle; }
+.prose li > ul, .prose li > ol { margin-top: 0.35em; }
 .prose li + li { margin-top: 0.35em; }
 .prose li::marker { color: var(--r-ink-3); font-family: var(--font-mono); font-size: 0.8em; }
 .prose hr { border: 0; border-top: 1px solid var(--r-rule); margin-block: 2.5em; }
