@@ -25,8 +25,9 @@
               <span class="text-xs text-chrome">pending · only you can see this until it's approved</span>
             } @else {
               <button type="button" (click)="guestbook.toggleLike(entry)" [attr.aria-pressed]="entry.liked"
+                [disabled]="guestbook.likesInFlight().has(entry.id)"
                 [attr.aria-label]="(entry.liked ? 'Unlike' : 'Like') + ' note, ' + entry.likeCount + ' likes'"
-                class="group inline-flex items-center gap-1.5 justify-self-start py-0.5 text-xs text-ink-3 hover:text-ink aria-pressed:text-signal">
+                class="group inline-flex items-center gap-1.5 justify-self-start py-0.5 text-xs text-ink-3 hover:text-ink aria-pressed:text-signal disabled:cursor-wait disabled:opacity-60">
                 <svg viewBox="0 0 16 16" aria-hidden="true"
                   class="size-[0.8em] fill-none stroke-current stroke-[1.4] transition-transform duration-200 group-active:-translate-y-0.5 group-aria-pressed:fill-current">
                   <path d="M8 2.5 13.5 13h-11z" />

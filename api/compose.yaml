@@ -1,13 +1,16 @@
-# The API on the homelab, behind api.alenalex.me (Cloudflare Tunnel or a reverse proxy).
+# The API on the homelab, published at api.alenalex.me through a Cloudflare Tunnel,
+# with a daily pg_dump of the (Aiven) PostgreSQL database to R2.
 #
-#   cp compose.env.example compose.env      # fill in the secrets once
-#   docker compose up -d                    # run the published image from GHCR
-#   docker compose up -d --build            # or build it from this folder
+#   cp compose.env.example compose.env      # API secrets, including the database URI
+#   cp .env.example .env                    # tunnel token, backup database + bucket
+#   docker compose up -d
 #   docker compose logs -f api
-#   docker compose pull && docker compose up -d   # update to the latest image
+#   docker compose pull && docker compose up -d     # update
+#   docker compose exec backup sh backup.sh         # back up now
+#   docker compose exec backup sh restore.sh        # restore the latest backup
 #
-# Non-secret settings are below; secrets come from compose.env (gitignored).
-# See README "Configuration".
+# In the Cloudflare Zero Trust dashboard, point the tunnel's public hostname
+# api.alenalex.me at http://alenalex-api:8080 (the service name on the shared network).
 
 name: alenalex
 
@@ -23,17 +26,14 @@ services:
       - path: compose.env
         required: true
     environment:
-      ConnectionStrings__Guestbook: "Data Source=/data/guestbook.db"
       Api__IpHeader: "CF-Connecting-IP"
       Api__AllowedOrigins__0: "https://alenalex.me"
       Api__EnableScalar: "false"
     ports:
-      # loopback only, the tunnel / reverse proxy is the public entry point
+      # loopback only, for checking it from the host; the tunnel reaches it over the network
       - "127.0.0.1:${API_PORT:-8080}:8080"
-    volumes:
-      - guestbook-data:/data
-
-    # the app only writes to /data
+    networks:
+      - alenalex
     read_only: true
     tmpfs:
       - /tmp
@@ -41,12 +41,52 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    logging:
+    logging: &logging
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
 
-volumes:
-  guestbook-data:
-    name: alenalex-guestbook-data
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    networks:
+      - alenalex
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+
+  backup:
+    # the tag is pg_dump's major version: it must be >= the server's (16 is the newest published)
+    image: eeshugerman/postgres-backup-s3:16
+    container_name: alenalex-backup
+    restart: unless-stopped
+    environment:
+      SCHEDULE: "${BACKUP_SCHEDULE:-@daily}"
+      BACKUP_KEEP_DAYS: "${BACKUP_KEEP_DAYS:-30}"
+      PASSPHRASE: "${BACKUP_PASSPHRASE:-}" # set to GPG-encrypt the dumps
+      POSTGRES_HOST: ${PG_HOST:?set PG_HOST in .env}
+      POSTGRES_PORT: ${PG_PORT:?set PG_PORT in .env}
+      POSTGRES_DATABASE: ${PG_DATABASE:-defaultdb}
+      POSTGRES_USER: ${PG_USER:-avnadmin}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?set PG_PASSWORD in .env}
+      PGSSLMODE: require # Aiven only accepts TLS; pg_dump reads this libpq variable
+      S3_ENDPOINT: "https://${BACKUP_R2_ACCOUNT_ID:?set BACKUP_R2_ACCOUNT_ID in .env}.r2.cloudflarestorage.com"
+      S3_REGION: auto
+      S3_BUCKET: ${BACKUP_R2_BUCKET:?set BACKUP_R2_BUCKET in .env}
+      S3_PREFIX: guestbook
+      S3_ACCESS_KEY_ID: ${BACKUP_R2_ACCESS_KEY_ID:?set BACKUP_R2_ACCESS_KEY_ID in .env}
+      S3_SECRET_ACCESS_KEY: ${BACKUP_R2_SECRET_ACCESS_KEY:?set BACKUP_R2_SECRET_ACCESS_KEY in .env}
+      # newer AWS CLIs send checksum headers R2 may reject; only send them when required
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+    logging: *logging
+
+networks:
+  alenalex:
+    name: alenalex

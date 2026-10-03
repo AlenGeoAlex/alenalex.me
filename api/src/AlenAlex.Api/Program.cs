@@ -36,6 +36,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
 builder.Services.AddPersistence();
 
+builder.Services.AddApiRateLimiting();
 builder.Services.AddGuestbook();
 builder.Services.AddGithub();
 builder.Services.AddPosts();
@@ -53,6 +54,7 @@ if (apiOptions.AllowedOrigins.Length == 0)
 
 app.UseExceptionHandler(ApiExceptionHandler.Options);
 app.UseCors();
+app.UseRateLimiter();
 
 app.MapEndpoint<HealthEndpoint>();
 app.MapGuestbook();

@@ -17,6 +17,7 @@ export class GuestbookComposerComponent {
   protected readonly text = signal('');
 
   protected readonly valid = computed(() => this.guestbook.isValid(this.text()));
+  protected readonly sending = computed(() => this.guestbook.send().kind === 'sending');
   protected readonly hint = computed(() => {
     const n = this.text().trim().length;
     if (n === 0) return `${GUESTBOOK_MIN_CHARS}–${GUESTBOOK_MAX_CHARS} characters · shows after a quick moderation`;
@@ -26,7 +27,8 @@ export class GuestbookComposerComponent {
 
   protected async submit(event: Event): Promise<void> {
     event.preventDefault();
-    if (!this.valid()) return;
+    // ⌘↵ calls this directly, so the disabled button alone doesn't stop a double submit
+    if (!this.valid() || this.sending()) return;
     if (await this.guestbook.post(this.text())) this.text.set('');
   }
 }

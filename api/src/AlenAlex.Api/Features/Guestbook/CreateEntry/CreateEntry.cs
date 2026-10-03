@@ -36,8 +36,10 @@ public sealed class CreateEntryHandler(IUnitOfWorkFactory database, TimeProvider
         var now = time.GetUtcNow();
 
         await using var uow = await database.CreateAsync(ct);
-        // Count and insert in one transaction so parallel posts cannot slip past the limit.
+        // Count and insert in one transaction, holding a per-visitor lock, so parallel posts
+        // from the same IP wait for each other instead of both slipping under the limit.
         await uow.BeginAsync(ct);
+        await uow.Guestbook.LockVisitorAsync(ipHash, ct);
 
         if (await uow.Guestbook.CountCreatedSinceAsync(ipHash, now.AddHours(-1), ct) >= MaxEntriesPerHour)
         {

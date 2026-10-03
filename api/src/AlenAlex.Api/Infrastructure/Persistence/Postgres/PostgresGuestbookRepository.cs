@@ -1,88 +1,86 @@
-using System.Globalization;
 using AlenAlex.Api.Features.Guestbook.Shared;
-using Microsoft.Data.Sqlite;
+using Npgsql;
 
-namespace AlenAlex.Api.Infrastructure.Persistence.Sqlite;
+namespace AlenAlex.Api.Infrastructure.Persistence.Postgres;
 
 /// <summary>
-/// Timestamps are text and compared with <c>julianday()</c>, which handles both formats in the
-/// existing database (see <see cref="FormatTimestamp"/>). Every query is a <c>const</c> with typed
-/// parameters; CA2100 fails the build otherwise.
+/// Every method runs exactly one <c>const</c> query (CA2100 fails the build otherwise) and binds
+/// every value as a typed parameter.
 /// </summary>
-public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbookRepository
+public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuestbookRepository
 {
-    // Entry queries all select the columns in the order ReadEntriesAsync expects.
+    // Entry queries select the same columns in the order ReadEntriesAsync expects.
 
     private const string ListVisibleSql =
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = $viewer) AS liked
+               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked
         FROM guestbook_entries e
-        WHERE e.status = 'accepted' OR (e.status = 'pending_approval' AND e.ip_hash = $viewer)
-        ORDER BY julianday(e.created_at) DESC, e.seq DESC
+        WHERE e.status = 'accepted' OR (e.status = 'pending_approval' AND e.ip_hash = @viewer)
+        ORDER BY e.created_at DESC, e.seq DESC
         """;
 
     private const string ListPendingSql =
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               0 AS liked
+               FALSE AS liked
         FROM guestbook_entries e
         WHERE e.status = 'pending_approval'
-        ORDER BY julianday(e.created_at) ASC
+        ORDER BY e.created_at ASC, e.seq ASC
         """;
 
     private const string GetByIdSql =
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = $viewer) AS liked
+               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked
         FROM guestbook_entries e
-        WHERE e.id = $id
+        WHERE e.id = @id
         """;
+
+    // transaction-scoped advisory lock keyed on the visitor; released on commit/rollback
+    private const string LockVisitorSql = "SELECT pg_advisory_xact_lock(hashtextextended(@ip, 0))";
 
     private const string CountCreatedSinceSql =
-        """
-        SELECT COUNT(*) FROM guestbook_entries
-        WHERE ip_hash = $ip AND julianday(created_at) > julianday($since)
-        """;
+        "SELECT COUNT(*) FROM guestbook_entries WHERE ip_hash = @ip AND created_at > @since";
 
-    // A single statement, so computing seq is atomic.
+    // seq comes from the column's identity sequence.
     private const string InsertSql =
         """
-        INSERT INTO guestbook_entries (id, seq, name, message, status, ip_hash, created_at)
-        VALUES ($id, (SELECT COALESCE(MAX(seq), 0) + 1 FROM guestbook_entries), $name, $message, 'pending_approval', $ip, $created_at)
+        INSERT INTO guestbook_entries (id, name, message, status, ip_hash, created_at)
+        VALUES (@id, @name, @message, 'pending_approval', @ip, @created_at)
         RETURNING seq
         """;
 
-    private const string GetStatusSql = "SELECT status FROM guestbook_entries WHERE id = $id";
+    private const string GetStatusSql = "SELECT status FROM guestbook_entries WHERE id = @id";
 
     private const string SetStatusIfPendingSql =
         """
-        UPDATE guestbook_entries SET status = $status, rejection_reason = $reason
-        WHERE id = $id AND status = 'pending_approval'
+        UPDATE guestbook_entries SET status = @status, rejection_reason = @reason
+        WHERE id = @id AND status = 'pending_approval'
         """;
 
     private const string AddLikeSql =
         """
-        INSERT INTO guestbook_likes (entry_id, ip_hash, created_at) VALUES ($entry, $ip, $created_at)
+        INSERT INTO guestbook_likes (entry_id, ip_hash, created_at) VALUES (@entry, @ip, @created_at)
         ON CONFLICT (entry_id, ip_hash) DO NOTHING
         """;
 
-    private const string RemoveLikeSql = "DELETE FROM guestbook_likes WHERE entry_id = $entry AND ip_hash = $ip";
+    private const string RemoveLikeSql = "DELETE FROM guestbook_likes WHERE entry_id = @entry AND ip_hash = @ip";
 
     private const string GetLikeStateSql =
         """
-        SELECT (SELECT COUNT(*) FROM guestbook_likes WHERE entry_id = $entry),
-               EXISTS (SELECT 1 FROM guestbook_likes WHERE entry_id = $entry AND ip_hash = $ip)
+        SELECT (SELECT COUNT(*) FROM guestbook_likes WHERE entry_id = @entry),
+               EXISTS (SELECT 1 FROM guestbook_likes WHERE entry_id = @entry AND ip_hash = @ip)
         """;
 
     public async Task<IReadOnlyList<GuestbookEntry>> ListVisibleAsync(string viewerIpHash, CancellationToken ct = default)
     {
         await using var command = session.CreateCommand();
         command.CommandText = ListVisibleSql;
-        command.WithText("$viewer", viewerIpHash);
+        command.WithText("viewer", viewerIpHash);
         return await ReadEntriesAsync(command, ct);
     }
 
@@ -97,28 +95,36 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = GetByIdSql;
-        command.WithText("$id", id).WithText("$viewer", viewerIpHash);
+        command.WithText("id", id).WithText("viewer", viewerIpHash);
         var entries = await ReadEntriesAsync(command, ct);
         return entries.Count > 0 ? entries[0] : null;
+    }
+
+    public async Task LockVisitorAsync(string ipHash, CancellationToken ct = default)
+    {
+        await using var command = session.CreateCommand();
+        command.CommandText = LockVisitorSql;
+        command.WithText("ip", ipHash);
+        await command.ExecuteNonQueryAsync(ct);
     }
 
     public async Task<int> CountCreatedSinceAsync(string ipHash, DateTimeOffset since, CancellationToken ct = default)
     {
         await using var command = session.CreateCommand();
         command.CommandText = CountCreatedSinceSql;
-        command.WithText("$ip", ipHash).WithText("$since", FormatTimestamp(since));
-        return Convert.ToInt32(await command.ExecuteScalarAsync(ct), CultureInfo.InvariantCulture);
+        command.WithText("ip", ipHash).WithTimestamp("since", since);
+        return (int)(long)(await command.ExecuteScalarAsync(ct))!;
     }
 
     public async Task<long> InsertAsync(NewGuestbookEntry entry, CancellationToken ct = default)
     {
         await using var command = session.CreateCommand();
         command.CommandText = InsertSql;
-        command.WithText("$id", entry.Id)
-            .WithText("$name", entry.Name)
-            .WithText("$message", entry.Message)
-            .WithText("$ip", entry.IpHash)
-            .WithText("$created_at", FormatTimestamp(entry.CreatedAt));
+        command.WithText("id", entry.Id)
+            .WithText("name", entry.Name)
+            .WithText("message", entry.Message)
+            .WithText("ip", entry.IpHash)
+            .WithTimestamp("created_at", entry.CreatedAt);
         return (long)(await command.ExecuteScalarAsync(ct))!;
     }
 
@@ -126,7 +132,7 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = GetStatusSql;
-        command.WithText("$id", id);
+        command.WithText("id", id);
         return await command.ExecuteScalarAsync(ct) is string status ? ParseStatus(status) : null;
     }
 
@@ -134,7 +140,7 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = SetStatusIfPendingSql;
-        command.WithText("$status", ToDbString(status)).WithText("$reason", rejectionReason).WithText("$id", id);
+        command.WithText("status", ToDbString(status)).WithText("reason", rejectionReason).WithText("id", id);
         return await command.ExecuteNonQueryAsync(ct) > 0;
     }
 
@@ -142,7 +148,7 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = AddLikeSql;
-        command.WithText("$entry", entryId).WithText("$ip", ipHash).WithText("$created_at", FormatTimestamp(createdAt));
+        command.WithText("entry", entryId).WithText("ip", ipHash).WithTimestamp("created_at", createdAt);
         await command.ExecuteNonQueryAsync(ct);
     }
 
@@ -150,7 +156,7 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = RemoveLikeSql;
-        command.WithText("$entry", entryId).WithText("$ip", ipHash);
+        command.WithText("entry", entryId).WithText("ip", ipHash);
         await command.ExecuteNonQueryAsync(ct);
     }
 
@@ -158,13 +164,13 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         await using var command = session.CreateCommand();
         command.CommandText = GetLikeStateSql;
-        command.WithText("$entry", entryId).WithText("$ip", ipHash);
+        command.WithText("entry", entryId).WithText("ip", ipHash);
         await using var reader = await command.ExecuteReaderAsync(ct);
         await reader.ReadAsync(ct);
-        return new LikeState(reader.GetInt64(0), reader.GetInt64(1) != 0);
+        return new LikeState(reader.GetInt64(0), reader.GetBoolean(1));
     }
 
-    private static async Task<IReadOnlyList<GuestbookEntry>> ReadEntriesAsync(SqliteCommand command, CancellationToken ct)
+    private static async Task<IReadOnlyList<GuestbookEntry>> ReadEntriesAsync(NpgsqlCommand command, CancellationToken ct)
     {
         await using var reader = await command.ExecuteReaderAsync(ct);
         var entries = new List<GuestbookEntry>();
@@ -172,13 +178,13 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
         {
             entries.Add(new GuestbookEntry(
                 Id: reader.GetString(0),
-                Seq: reader.IsDBNull(1) ? 0 : reader.GetInt64(1),
+                Seq: reader.GetInt64(1),
                 Name: reader.GetString(2),
                 Message: reader.GetString(3),
                 Status: ParseStatus(reader.GetString(4)),
-                CreatedAt: ParseTimestamp(reader.GetString(5)),
+                CreatedAt: reader.GetFieldValue<DateTimeOffset>(5),
                 LikeCount: reader.GetInt64(6),
-                Liked: reader.GetInt64(7) != 0));
+                Liked: reader.GetBoolean(7)));
         }
         return entries;
     }
@@ -195,17 +201,6 @@ public sealed class SqliteGuestbookRepository(ISqliteSession session) : IGuestbo
     {
         "accepted" => GuestbookStatus.Accepted,
         "rejected" => GuestbookStatus.Rejected,
-        // Anything unrecognised counts as pending.
         _ => GuestbookStatus.PendingApproval,
     };
-
-    /// <summary>
-    /// <c>2026-10-02T20:17:01.393147+00:00</c>, matching the existing rows. The oldest rows use
-    /// SQLite's <c>2026-07-11 10:00:00</c> (UTC); <see cref="ParseTimestamp"/> reads both.
-    /// </summary>
-    internal static string FormatTimestamp(DateTimeOffset value) =>
-        value.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff'+00:00'", CultureInfo.InvariantCulture);
-
-    internal static DateTimeOffset ParseTimestamp(string value) =>
-        DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal).ToUniversalTime();
 }

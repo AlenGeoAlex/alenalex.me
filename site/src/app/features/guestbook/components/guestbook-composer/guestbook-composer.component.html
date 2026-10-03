@@ -28,11 +28,18 @@
         @default { {{ hint() }} }
       }
     </span>
-    <button type="submit" [disabled]="!valid() || guestbook.send().kind === 'sending'"
-      class="shrink-0 border border-ink bg-ink px-4 py-1.5 text-sm font-medium tracking-[0.04em] whitespace-nowrap text-ground transition-colors
+    <button type="submit" [disabled]="!valid() || sending()" [attr.aria-busy]="sending()"
+      class="inline-flex min-w-[5.5rem] shrink-0 items-center justify-center gap-2 border border-ink bg-ink px-4 py-1.5 text-sm font-medium tracking-[0.04em] whitespace-nowrap text-ground transition-colors
              hover:enabled:border-signal hover:enabled:bg-signal
              disabled:cursor-not-allowed disabled:border-rule-2 disabled:bg-transparent disabled:text-ink-3">
-      post ↵
+      @if (sending()) {
+        <svg viewBox="0 0 16 16" aria-hidden="true" class="size-3.5 animate-spin fill-none stroke-current stroke-[1.6]">
+          <path d="M8 1.5a6.5 6.5 0 1 1-6.5 6.5" />
+        </svg>
+        posting
+      } @else {
+        post ↵
+      }
     </button>
   </div>
 </form>

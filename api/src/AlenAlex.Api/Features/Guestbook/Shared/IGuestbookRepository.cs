@@ -15,6 +15,12 @@ public interface IGuestbookRepository
     /// <summary>One entry in any status, as seen by <paramref name="viewerIpHash"/>.</summary>
     Task<GuestbookEntry?> GetByIdAsync(string id, string viewerIpHash, CancellationToken ct = default);
 
+    /// <summary>
+    /// Serializes writes from one visitor until the current transaction ends, so a count-then-insert
+    /// can't be raced by a second request from the same IP. Must be called inside a transaction.
+    /// </summary>
+    Task LockVisitorAsync(string ipHash, CancellationToken ct = default);
+
     /// <summary>Entries created by <paramref name="ipHash"/> after <paramref name="since"/> (rate limiting).</summary>
     Task<int> CountCreatedSinceAsync(string ipHash, DateTimeOffset since, CancellationToken ct = default);
 

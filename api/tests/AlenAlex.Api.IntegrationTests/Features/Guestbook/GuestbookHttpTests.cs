@@ -141,5 +141,28 @@ public sealed class GuestbookHttpTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.NotFound, status);
         AssertEqual("""{"error":"entry not found"}""", body);
     }
-}
 
+    [Fact]
+    public async Task Writes_are_rate_limited_per_visitor()
+    {
+        var spammer = _factory.CreateClientFor("9.9.9.9");
+        var someoneElse = _factory.CreateClientFor("8.8.8.8");
+
+        // Unknown entry: each like is a cheap 404 until the per-minute limit kicks in.
+        for (var i = 0; i < AlenAlex.Api.Infrastructure.Http.RateLimiting.WritesPerMinute; i++)
+        {
+            var (allowed, _) = await SendAsync(spammer, HttpMethod.Post, "/api/guestbook/nope/likes");
+            Assert.Equal(HttpStatusCode.NotFound, allowed);
+        }
+
+        var response = await spammer.PostAsync("/api/guestbook/nope/likes", null, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+        Assert.True(response.Headers.RetryAfter is not null, "Retry-After header");
+        AssertEqual("""{"error":"too many requests, slow down"}""",
+            JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)));
+
+        // Reads aren't limited, and other visitors aren't affected.
+        Assert.Equal(HttpStatusCode.OK, (await SendAsync(spammer, HttpMethod.Get, "/api/guestbook")).Item1);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(someoneElse, HttpMethod.Post, "/api/guestbook/nope/likes")).Item1);
+    }
+}

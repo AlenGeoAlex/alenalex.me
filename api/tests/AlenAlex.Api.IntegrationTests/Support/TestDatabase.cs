@@ -1,30 +1,30 @@
 using AlenAlex.Api.Infrastructure.Persistence;
-using AlenAlex.Api.Infrastructure.Persistence.Sqlite;
-using Microsoft.Data.Sqlite;
+using AlenAlex.Api.Infrastructure.Persistence.Postgres;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace AlenAlex.Api.IntegrationTests.Support;
 
-/// <summary>A real SQLite file in the temp folder, migrated by FluentMigrator; deleted on dispose.</summary>
+/// <summary>A fresh database in the shared PostgreSQL container, migrated by FluentMigrator.</summary>
 public sealed class TestDatabase : IAsyncDisposable
 {
-    private TestDatabase()
+    private readonly NpgsqlDataSource _dataSource;
+
+    private TestDatabase(string connectionString)
     {
-        Connections = new SqliteConnectionFactory(ConnectionString);
-        UnitOfWork = new SqliteUnitOfWorkFactory(Connections);
+        ConnectionString = connectionString;
+        _dataSource = NpgsqlDataSource.Create(connectionString);
+        UnitOfWork = new PostgresUnitOfWorkFactory(_dataSource);
     }
 
-    public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"alenalex-api-it-{Guid.NewGuid():N}.db");
-
-    public string ConnectionString => $"Data Source={Path}";
-
-    public SqliteConnectionFactory Connections { get; }
+    public string ConnectionString { get; }
 
     public IUnitOfWorkFactory UnitOfWork { get; }
 
+    /// <summary>Skips the calling test when Docker is unavailable.</summary>
     public static TestDatabase Create(bool migrate = true)
     {
-        var db = new TestDatabase();
+        var db = new TestDatabase(PostgresServer.CreateDatabase());
         if (migrate)
         {
             db.Migrate();
@@ -32,31 +32,19 @@ public sealed class TestDatabase : IAsyncDisposable
         return db;
     }
 
-    public void Migrate() => new DatabaseMigrator(Connections, NullLoggerFactory.Instance).MigrateUp();
+    public void Migrate() => new DatabaseMigrator(ConnectionString, NullLoggerFactory.Instance).MigrateUp();
 
     public async Task ExecuteAsync(string sql)
     {
-        await using var connection = await Connections.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
+        await using var command = _dataSource.CreateCommand(sql);
         await command.ExecuteNonQueryAsync();
     }
 
     public async Task<object?> ScalarAsync(string sql)
     {
-        await using var connection = await Connections.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
+        await using var command = _dataSource.CreateCommand(sql);
         return await command.ExecuteScalarAsync();
     }
 
-    public ValueTask DisposeAsync()
-    {
-        SqliteConnection.ClearAllPools();
-        foreach (var suffix in new[] { "", "-wal", "-shm" })
-        {
-            File.Delete(Path + suffix);
-        }
-        return ValueTask.CompletedTask;
-    }
+    public ValueTask DisposeAsync() => _dataSource.DisposeAsync();
 }

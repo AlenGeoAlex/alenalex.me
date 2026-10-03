@@ -35,9 +35,11 @@ public static class GuestbookFeature
             .AddEndpointFilter(GuestbookErrorFilter.InvokeAsync);
 
         group.MapEndpoint<ListEntriesEndpoint>();
-        group.MapEndpoint<CreateEntryEndpoint>();
-        group.MapEndpoint<LikeEntryEndpoint>();
-        group.MapEndpoint<UnlikeEntryEndpoint>();
+
+        var writes = group.MapGroup("").RequireRateLimiting(RateLimiting.WritePolicy);
+        writes.MapEndpoint<CreateEntryEndpoint>();
+        writes.MapEndpoint<LikeEntryEndpoint>();
+        writes.MapEndpoint<UnlikeEntryEndpoint>();
         return app;
     }
 }

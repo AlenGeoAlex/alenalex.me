@@ -5,7 +5,7 @@ namespace AlenAlex.Api.IntegrationTests.Persistence;
 
 /// <summary>
 /// Shared by every provider. To test another one, subclass this and return a migrated database
-/// from <see cref="CreateDatabaseAsync"/>, like <see cref="SqliteGuestbookRepositoryTests"/>.
+/// from <see cref="CreateDatabaseAsync"/>, like <see cref="PostgresGuestbookRepositoryTests"/>.
 /// </summary>
 public abstract class GuestbookRepositoryContractTests : IAsyncLifetime
 {

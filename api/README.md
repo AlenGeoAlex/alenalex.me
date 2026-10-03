@@ -40,14 +40,14 @@ src/AlenAlex.Api/
       Shared/                     live status store + models
   Infrastructure/
     Persistence/                  IUnitOfWork(+Factory), FluentMigrator migrations, DatabaseMigrator
-      Sqlite/                     SQLite unit of work + repository (hand-written ADO.NET)
+      Postgres/                   Npgsql unit of work + repository, connection string, keep-alive
     Discord/                      NetCord gateway (presence + moderation), moderation notifier
     Http/                         IEndpoint, client IP + hashing, error bodies, exception handler
   Options/                        ApiOptions, DiscordOptions, GithubOptions, HomelabOptions
   Json/                           AppJsonContext (source-generated, camelCase)
 tests/
   AlenAlex.Api.Tests/             fast unit tests, no I/O
-  AlenAlex.Api.IntegrationTests/  real SQLite + FluentMigrator, the real app in-process,
+  AlenAlex.Api.IntegrationTests/  real PostgreSQL (Testcontainers) + FluentMigrator, the real app in-process,
                                   WireMock (Testcontainers) emulating GitHub and the homelab
 ```
 
@@ -61,10 +61,10 @@ tests/
 - JSON is source-generated: every request/response type must be listed in
   `Json/AppJsonContext.cs`. The contract is camelCase; nulls are written.
 - Data access goes through `IUnitOfWorkFactory` → `IUnitOfWork.Guestbook`
-  (`IGuestbookRepository`); handlers don't touch `Microsoft.Data.Sqlite`. Writes run inside
+  (`IGuestbookRepository`); handlers don't touch Npgsql. Writes run inside
   `BeginAsync()` / `CommitAsync()`; disposing without commit rolls back.
 - SQL is never built from strings. Each repository method uses a `const` query and typed
-  parameters (`command.WithText("$id", id)`). `src/AlenAlex.Api/.editorconfig` makes CA2100
+  parameters (`command.WithText("id", id)` → `NpgsqlDbType.Text`). `src/AlenAlex.Api/.editorconfig` makes CA2100
   (non-constant command text) and CA3001 (SQL injection taint analysis) build errors. The
   repository and HTTP tests push injection payloads through every parameter.
 - Expected guestbook failures are exceptions (`GuestbookValidationException` → 422,
@@ -74,13 +74,16 @@ tests/
 ## Run locally
 
 ```sh
+docker run -d --name pg -e POSTGRES_PASSWORD=dev -p 5432:5432 postgres:16-alpine
 cd src/AlenAlex.Api
 cp appsettings.Development.example.json appsettings.Development.json
-dotnet run          # http://localhost:8080, Development environment
+dotnet run          # http://localhost:8080, Development environment; migrates the database on start
 ```
 
 `appsettings.Development.json` is gitignored. The example sets the hashing salt to `dev`, allows
-CORS from `http://localhost:4200`, uses a local `dev.db` and enables Scalar at
+CORS from `http://localhost:4200`, connects to that local PostgreSQL
+(`Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=dev`), turns the
+keep-alive off and enables Scalar at
 <http://localhost:8080/scalar>. Without tokens, `/api/github` returns
 `503 {"error":"warming up"}`, the post endpoints `503 {"error":"github not configured"}`,
 `discord.status` is `"unknown"`, and new entries aren't sent to Discord (a warning is logged).
@@ -100,7 +103,7 @@ dotnet user-secrets list
 To approve an entry locally without Discord:
 
 ```sh
-sqlite3 dev.db "UPDATE guestbook_entries SET status='accepted' WHERE id='<id>'"
+docker exec pg psql -U postgres -c "UPDATE guestbook_entries SET status='accepted' WHERE id='<id>'"
 ```
 
 ## Tests
@@ -108,25 +111,26 @@ sqlite3 dev.db "UPDATE guestbook_entries SET status='accepted' WHERE id='<id>'"
 ```sh
 dotnet test                                     # everything
 dotnet test tests/AlenAlex.Api.Tests            # unit tests only (no Docker, < 1 s)
-dotnet test tests/AlenAlex.Api.IntegrationTests # needs Docker for the WireMock tests
+dotnet test tests/AlenAlex.Api.IntegrationTests # needs Docker (PostgreSQL + WireMock containers)
 ```
 
 - Unit tests: validation, IP hashing (fixed vectors that stored hashes depend on), client IP
-  resolution, post input validation, GitHub summary building, presence mapping, options binding.
+  resolution, post input validation, GitHub summary building, presence mapping, options binding,
+  the database URI conversion and the keep-alive.
 - Integration tests:
   - `GuestbookRepositoryContractTests` is an abstract suite against `IGuestbookRepository` /
-    `IUnitOfWork`; `SqliteGuestbookRepositoryTests` runs it on a real SQLite file. Another
-    provider would add one subclass.
-  - Migrations against a fresh database and the states the production database can be in
-    (original schema without `seq`; with a `_sqlx_migrations` table and `seq`; upgraded schema
-    without any bookkeeping).
-  - The real app via `WebApplicationFactory` on a SQLite file: the guestbook contract (exact
+    `IUnitOfWork`; `PostgresGuestbookRepositoryTests` runs it on PostgreSQL (`postgres:16-alpine`
+    via Testcontainers; every test gets its own fresh database), plus Postgres specifics: the
+    status check constraint, microsecond UTC timestamps, cascade delete, and imported rows
+    keeping their `seq`.
+  - Migrations: a fresh database gets the full schema; running them again is a no-op.
+  - The real app via `WebApplicationFactory` on its own PostgreSQL database: the guestbook contract (exact
     error bodies, likes, rate limit), CORS, status, health and post input validation
     (including raw `..` path segments).
   - A WireMock container (Testcontainers) stands in for GitHub (GraphQL, and REST
     commits/contents including 404, rate-limit 403, binary and >10 MB assets, cache hits) and
-    the homelab services (200, 500, 302, and a delay past the 5 s timeout). Skipped when
-    Docker is unavailable.
+    the homelab services (200, 500, 302, and a delay past the 5 s timeout).
+  - Without Docker, the container-backed tests are skipped with a message.
   - Discord can't be emulated, so tests swap `IGuestbookModerationNotifier` for
     `FakeModerationNotifier` and check that new entries were queued.
 
@@ -139,7 +143,8 @@ Standard ASP.NET Core configuration, in increasing priority: `appsettings.json` 
 
 | Key | Env var (production) | Default | Purpose |
 |---|---|---|---|
-| `ConnectionStrings:Guestbook` | `ConnectionStrings__Guestbook` | `Data Source=guestbook.db` (Docker: `/data/guestbook.db`) | SQLite connection string |
+| `ConnectionStrings:Guestbook` | `ConnectionStrings__Guestbook` | **required, secret** | PostgreSQL: Aiven's `postgres://…?sslmode=require` URI or an Npgsql connection string |
+| `Database:KeepAliveInterval` | `Database__KeepAliveInterval` | `01:00:00` | `SELECT 1` this often so a free-tier database isn't powered off; `00:00:00` = off |
 | `Api:HashingSalt` | `Api__HashingSalt` | **required, secret** | Salt for hashing visitor IPs; must not change, see below |
 | `Api:IpHeader` | `Api__IpHeader` | — | e.g. `CF-Connecting-IP`; otherwise the TCP peer address is used |
 | `Api:AllowedOrigins` | `Api__AllowedOrigins__0`, `__1`, … | `[]` | CORS origins (GET/POST/DELETE/OPTIONS, `Content-Type`) |
@@ -230,31 +235,76 @@ Malformed JSON bodies get `400 {"error":"bad request"}`.
 
 ## Database and migrations
 
-SQLite via `Microsoft.Data.Sqlite` with hand-written SQL behind `IGuestbookRepository` /
-`IUnitOfWork` (`Infrastructure/Persistence/Sqlite`). Another database would go in a sibling
-folder (e.g. `Persistence/Postgres`), registered in `PersistenceServiceCollectionExtensions`,
-with its own subclass of the repository contract tests.
+PostgreSQL via Npgsql (`NpgsqlSlimDataSourceBuilder` with only TLS enabled, to keep the AOT
+binary small), hand-written SQL behind `IGuestbookRepository` / `IUnitOfWork`
+(`Infrastructure/Persistence/Postgres`).
 
-Migrations use FluentMigrator (`Infrastructure/Persistence/Migrations`), applied on startup by
-`DatabaseMigrator` and tracked in the `VersionInfo` table:
+Migrations use FluentMigrator's PostgreSQL processor (`Infrastructure/Persistence/Migrations`),
+applied on startup by `DatabaseMigrator` and tracked in `"VersionInfo"`. Add new migrations to
+`DatabaseMigrator.All()`.
 
-- `20260711001` – the original schema (`guestbook_entries`, `guestbook_likes`), skipped per
-  table when it already exists.
-- `20261002001` – folds old `'pending'`/`''` statuses into `'pending_approval'`, adds
-  `seq` (backfilled from SQLite's rowid) only if the column is missing, and creates the
-  indexes only if they are missing.
+`20261004001` creates:
 
-Both check the schema before each step because the production `guestbook.db` is older than
-these migrations: it may have only the original tables (no `seq`), or already have `seq` and
-a `_sqlx_migrations` table, in which case nothing changes. A fresh file gets the full schema.
-Add new migrations to `DatabaseMigrator.All()`.
+- `guestbook_entries(id text pk, seq bigint identity (BY DEFAULT) unique, name, message,
+  status text CHECK in ('pending_approval','accepted','rejected'), ip_hash, rejection_reason,
+  created_at timestamptz)`, indexed on `(status, created_at)` and `(ip_hash, created_at)`.
+  `seq` is the number shown on the site (gb·0042); BY DEFAULT lets imported rows keep theirs.
+- `guestbook_likes(entry_id → guestbook_entries ON DELETE CASCADE, ip_hash, created_at timestamptz,
+  pk(entry_id, ip_hash))`.
 
-To match the existing rows, ids are 21-character nanoids and `created_at` is UTC text
-(`2026-10-02T20:17:01.393147+00:00`; the oldest rows use SQLite's `2026-07-11 10:00:00`),
-compared with `julianday()` so both sort together.
+Ids are 21-character nanoids. The API exposes `pending` / `accepted` and never returns rejected
+entries.
 
-Statuses in the database are exactly `pending_approval`, `accepted`, `rejected`. The API
-exposes `pending` / `accepted` and never returns rejected entries.
+### Aiven
+
+1. Create a PostgreSQL service (the free plan is enough). In the service overview, copy the
+   **Service URI** (`postgres://avnadmin:…@….aivencloud.com:12345/defaultdb?sslmode=require`).
+2. Put it in `compose.env` as `ConnectionStrings__Guestbook=…` (or in user secrets for local use).
+   The API converts the URI to an Npgsql connection string; `sslmode=require` means TLS without
+   certificate verification, which is what Aiven's URI asks for.
+3. Optional, stricter: download the service's **CA certificate** from the overview, mount it into
+   the container and use `?sslmode=verify-full&sslrootcert=/path/to/ca.pem` (or
+   `SSL Mode=VerifyFull;Root Certificate=/path/to/ca.pem`). `Trust Server Certificate` is never needed.
+4. Free services are powered off after a period without activity. The API runs `SELECT 1` every
+   `Database:KeepAliveInterval` (default 1 hour) to prevent that; failures are only logged.
+   If it does get powered off, power it on in the console; the API's container restarts until
+   the database is reachable (migrations run at startup).
+
+### Importing the old SQLite guestbook (once)
+
+Standard tools only: `sqlite3` and `psql` (`docker exec -i <pg-container> psql …` works too).
+Start the API against the new database once first (or run it now and stop it) so the tables
+exist and are empty. Then, on a **copy** of `guestbook.db`:
+
+```sh
+# Export. Use `seq` instead of `rowid AS seq` if the table already has a seq column
+# (sqlite3 guestbook.db "PRAGMA table_info(guestbook_entries)").
+# Old databases may hold 'pending' or '' statuses; the CASE folds them into 'pending_approval'
+# here, because the Postgres table's CHECK constraint rejects anything else.
+sqlite3 guestbook.db <<'SQL'
+.headers on
+.mode csv
+.once entries.csv
+SELECT id, rowid AS seq, name, message,
+       CASE WHEN status IN ('pending', '') THEN 'pending_approval' ELSE status END AS status,
+       ip_hash, rejection_reason, created_at
+FROM guestbook_entries ORDER BY seq;
+.once likes.csv
+SELECT entry_id, ip_hash, created_at FROM guestbook_likes;
+SQL
+
+# Import. timezone=UTC so the oldest rows ('2026-07-11 10:00:00', no offset) are read as UTC.
+PGOPTIONS='-c timezone=UTC' psql "$DATABASE_URI" -v ON_ERROR_STOP=1 <<'SQL'
+\copy guestbook_entries (id, seq, name, message, status, ip_hash, rejection_reason, created_at) from 'entries.csv' with (format csv, header)
+\copy guestbook_likes (entry_id, ip_hash, created_at) from 'likes.csv' with (format csv, header)
+-- new entries continue after the highest imported number
+SELECT setval(pg_get_serial_sequence('guestbook_entries', 'seq'), (SELECT MAX(seq) FROM guestbook_entries));
+SQL
+```
+
+(`likes.csv` is empty, without even a header, when there are no likes; `\copy` then imports 0 rows.)
+Keep `Api__HashingSalt` exactly as before: likes and pending-entry ownership are keyed by the
+salted IP hash.
 
 ## NativeAOT
 
@@ -262,8 +312,7 @@ exposes `pending` / `accepted` and never returns rejected entries.
 dotnet publish src/AlenAlex.Api -c Release -r osx-arm64     # or linux-x64 / linux-arm64
 ```
 
-The output is `alenalex-api` (about 35 MB) plus `libe_sqlite3` (the SQLite native library) and
-`appsettings.json` (the Development files are never published). Run the binary from
+The output is `alenalex-api` (about 40 MB, a single file) plus `appsettings.json` (the Development files are never published). Run the binary from
 that directory so `appsettings.json` is picked up, and set the port with
 `ASPNETCORE_HTTP_PORTS=8080` (or `--urls`).
 On macOS, if linking fails with `library 'dl' not found`, run
@@ -281,9 +330,9 @@ from FluentMigrator, which isn't trim-annotated:
   and `Assembly.Location`: IL3000), and DataAnnotations validation of migration expressions
   (IL2026).
 - Those scanning and provider-probing paths never run: `DatabaseMigrator` gives the runner an
-  explicit migration list (`ExplicitMigrationSource`) and returns `SqliteFactory.Instance`
-  directly (`AotSqliteDbFactory`). The published binary was checked against a fresh database
-  and copies of the existing ones.
+  explicit migration list (`ExplicitMigrationSource`) and returns `NpgsqlFactory.Instance`
+  directly (`AotPostgresDbFactory`). The published binary was checked against a fresh
+  PostgreSQL database and one holding imported data.
 - The csproj (`_FluentMigratorAotWarnings` target) compiles only the `FluentMigrator.*`
   assemblies in ILC's single-warn mode (one IL2104/IL3053 each) and silences IL2104, IL3053
   and IL3000 for ILC only. No other assembly is single-warn, so any other trim/AOT problem
@@ -295,11 +344,12 @@ from FluentMigrator, which isn't trim-annotated:
 
 `compose.yaml` runs the published image (`ghcr.io/alengeoalex/alenalex-api`, pushed by `.github/workflows/api.yml`;
 multi-arch, so the same tag runs on amd64 and arm64 hosts, including Docker on Apple Silicon)
-with the database on a named volume, the port bound to loopback only, a read-only root filesystem and all
-capabilities dropped. Secrets live in `compose.env` (gitignored; start from `compose.env.example`).
+with the port bound to loopback only, a read-only root filesystem and all capabilities dropped,
+plus `cloudflared` for the tunnel. The database is Aiven's (storage and backups are theirs).
+Secrets, including the database URI, live in `compose.env` (gitignored; start from `compose.env.example`).
 
 ```sh
-cp compose.env.example compose.env       # fill in Api__HashingSalt (required) and any tokens
+cp compose.env.example compose.env       # ConnectionStrings__Guestbook + Api__HashingSalt (required), tokens
 docker compose up -d                     # pull + run :latest (API_TAG=sha-abc1234 to pin a build)
 docker compose up -d --build             # or build from this folder instead
 docker compose ps                        # shows (healthy) once /_health answers
@@ -309,15 +359,7 @@ docker compose pull && docker compose up -d   # update
 `API_PORT` changes the host port (default 8080). If the GHCR package is private, log in once with
 `docker login ghcr.io -u AlenGeoAlex` using a token with `read:packages`.
 
-To bring an existing database over (once, before the first start):
-
-```sh
-docker volume create alenalex-guestbook-data
-docker run --rm -v alenalex-guestbook-data:/data -v "$PWD":/from alpine \
-  sh -c 'cp /from/guestbook.db /data/ && chown 1654:1654 /data/guestbook.db'
-```
-
-(1654 is the image's non-root `app` user.) The migrations upgrade it in place on first start.
+To bring the old SQLite guestbook over, see [Importing the old SQLite guestbook](#importing-the-old-sqlite-guestbook-once).
 
 The image's `HEALTHCHECK` runs `alenalex-api --healthcheck`, which calls `/_health` and exits
 0 or 1; the chiseled image has no shell or curl.
@@ -328,7 +370,7 @@ The image's `HEALTHCHECK` runs `alenalex-api --healthcheck`, which calls `/_heal
 docker build --platform linux/amd64 -t alenalex-api .
 docker run -d --name alenalex-api --restart unless-stopped \
   -p 127.0.0.1:8080:8080 \
-  -v alenalex-api-data:/data \
+  -e ConnectionStrings__Guestbook='postgres://avnadmin:…@….aivencloud.com:12345/defaultdb?sslmode=require' \
   -e Api__HashingSalt='<salt>' \
   -e Api__IpHeader=CF-Connecting-IP \
   -e Api__AllowedOrigins__0=https://alenalex.me \
@@ -341,8 +383,7 @@ docker run -d --name alenalex-api --restart unless-stopped \
 (Or put the same `Key=value` lines in a file and use `--env-file`.)
 
 The final image is `runtime-deps:10.0-noble-chiseled` (no shell, no .NET runtime, non-root
-`app` user) listening on 8080, with `ConnectionStrings__Guestbook=Data Source=/data/guestbook.db`;
-back up the `/data` volume. NativeAOT can't cross-compile between CPU architectures, so the
+`app` user) listening on 8080; it writes nothing to disk. NativeAOT can't cross-compile between CPU architectures, so the
 build stage runs on the target platform; building `linux/amd64` on Apple Silicon works under
 emulation but is slow.
 

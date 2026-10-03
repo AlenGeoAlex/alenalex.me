@@ -130,6 +130,29 @@ public sealed class GuestbookHandlerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Simultaneous_posts_from_one_visitor_cannot_get_past_the_limit()
+    {
+        var attempts = Enumerable.Range(0, 10)
+            .Select(i => Task.Run(async () =>
+            {
+                try
+                {
+                    await CreateAsync("Ada", $"burst {i}", Alice);
+                    return true;
+                }
+                catch (GuestbookRateLimitedException)
+                {
+                    return false;
+                }
+            }, TestContext.Current.CancellationToken));
+
+        var results = await Task.WhenAll(attempts);
+
+        Assert.Equal(CreateEntryHandler.MaxEntriesPerHour, results.Count(accepted => accepted));
+        Assert.Equal(CreateEntryHandler.MaxEntriesPerHour, (await _list.HandleAsync(Alice, TestContext.Current.CancellationToken)).Count);
+    }
+
+    [Fact]
     public async Task Entries_older_than_an_hour_do_not_count_towards_the_rate_limit()
     {
         for (var i = 0; i < 5; i++)

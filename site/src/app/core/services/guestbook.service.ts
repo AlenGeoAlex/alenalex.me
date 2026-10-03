@@ -57,7 +57,12 @@ export class GuestbookService {
     }
   }
 
+  /** Entries with a like/unlike request in flight; their button is disabled until it settles. */
+  readonly likesInFlight = signal<ReadonlySet<string>>(new Set());
+
   async toggleLike(entry: GuestbookEntry): Promise<void> {
+    if (this.likesInFlight().has(entry.id)) return;
+    this.likesInFlight.update((ids) => new Set(ids).add(entry.id));
     const liked = !entry.liked;
     // optimistic, then reconcile with the server's count
     this.patch(entry.id, { liked, likeCount: entry.likeCount + (liked ? 1 : -1) });
@@ -65,11 +70,21 @@ export class GuestbookService {
       this.patch(entry.id, await (liked ? this.api.like(entry.id) : this.api.unlike(entry.id)));
     } catch {
       this.patch(entry.id, { liked: entry.liked, likeCount: entry.likeCount });
+    } finally {
+      this.likesInFlight.update((ids) => {
+        const next = new Set(ids);
+        next.delete(entry.id);
+        return next;
+      });
     }
   }
 
   private sendError(err: ApiError): string {
-    if (err.status === 429) return 'too many notes from you this hour. try again later.';
+    // two limits answer 429: the notes-per-hour rule, and the per-minute request limit ("slow down")
+    if (err.status === 429)
+      return err.message.includes('slow down')
+        ? 'slow down a little, then try again in a minute.'
+        : 'too many notes from you this hour. try again later.';
     if (err.status === 422) return err.message;
     if (err.status === 0) return "couldn't reach the server, so your note wasn't saved. try again in a bit.";
     return `couldn't save your note (${err.message}).`;

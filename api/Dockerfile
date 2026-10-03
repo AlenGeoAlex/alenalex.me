@@ -27,8 +27,7 @@ COPY src/ src/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     RID=linux-$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) \
     && dotnet publish src/AlenAlex.Api/AlenAlex.Api.csproj -c Release -r "$RID" --no-restore -o /app \
-    && rm -f /app/*.dbg /app/*.staticwebassets.endpoints.json \
-    && mkdir -p /data
+    && rm -f /app/*.dbg /app/*.staticwebassets.endpoints.json
 
 # Runtime
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled AS final
@@ -36,13 +35,10 @@ LABEL org.opencontainers.image.source="https://github.com/AlenGeoAlex/alenalex.m
       org.opencontainers.image.description="alenalex.me API: guestbook, live status, post history"
 WORKDIR /app
 COPY --from=build /app ./
-COPY --from=build --chown=app:app /data /data
 
 USER app
-# Secrets come in as environment variables, e.g. -e Api__HashingSalt=...
-ENV ASPNETCORE_ENVIRONMENT=Production \
-    ConnectionStrings__Guestbook="Data Source=/data/guestbook.db"
-VOLUME ["/data"]
+# Secrets come in as environment variables, e.g. -e Api__HashingSalt=... -e ConnectionStrings__Guestbook=...
+ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 
 # No shell or curl in a chiseled image, so the binary health-checks itself.
