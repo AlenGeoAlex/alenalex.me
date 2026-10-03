@@ -125,6 +125,12 @@ This is the feature I wanted most and had to build least for.
 
 Every edit to a post is already a commit that touches its folder. So the **revisions** button on a post asks GitHub for the commits on `blogs/<folder>` and draws them as a timeline: date, commit message, short sha.
 
+Not every commit is worth showing, so the list is a little picky:
+
+- Only commits that changed `index.md` count. Retagging a post, flipping it to published or adding a screenshot isn't a revision of the text.
+- A commit with `[skip rev]` in its message is left out, same idea as `[skip ci]`. It's still on GitHub, it just doesn't clutter the timeline.
+- `revisions-since:` in `.meta` starts the list on a given day, so the half-finished drafting before release stays out of it.
+
 ![The history of the throwaway test post this one replaced](assets/revisions.png)
 
 Clicking one opens the post at `?preview=<sha>`. That fetches the `.meta` and `index.md` *as they were at that commit*, renders them in the browser, and shows a banner saying which version you're looking at. Typos I fixed, paragraphs I cut, the first version of a post before someone told me it was wrong: all of it is still readable, and I never wrote a line of versioning code. It's also how I preview a branch before merging it.
