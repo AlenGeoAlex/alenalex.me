@@ -145,6 +145,7 @@ Standard ASP.NET Core configuration, in increasing priority: `appsettings.json` 
 |---|---|---|---|
 | `ConnectionStrings:Guestbook` | `ConnectionStrings__Guestbook` | **required, secret** | PostgreSQL: Aiven's `postgres://…?sslmode=require` URI or an Npgsql connection string |
 | `Database:KeepAliveInterval` | `Database__KeepAliveInterval` | `01:00:00` | `SELECT 1` this often so a free-tier database isn't powered off; `00:00:00` = off |
+| `Database:Schema` | `Database__Schema` | `public` | Schema for the guestbook tables and FluentMigrator's `VersionInfo`; queries use it as the search path |
 | `Api:HashingSalt` | `Api__HashingSalt` | **required, secret** | Salt for hashing visitor IPs; must not change, see below |
 | `Api:IpHeader` | `Api__IpHeader` | — | e.g. `CF-Connecting-IP`; otherwise the TCP peer address is used |
 | `Api:AllowedOrigins` | `Api__AllowedOrigins__0`, `__1`, … | `[]` | CORS origins (GET/POST/DELETE/OPTIONS, `Content-Type`) |
@@ -269,6 +270,16 @@ entries.
    `Database:KeepAliveInterval` (default 1 hour) to prevent that; failures are only logged.
    If it does get powered off, power it on in the console; the API's container restarts until
    the database is reachable (migrations run at startup).
+5. Using a dedicated user instead of `avnadmin`? On PostgreSQL 15+ it can't create tables in
+   `public` ("permission denied for schema public"). As `avnadmin`, give it its own schema and point
+   the API at it:
+
+   ```sql
+   CREATE SCHEMA guestbook AUTHORIZATION guestbook_app;
+   ```
+
+   then set `Database__Schema=guestbook`. The tables and `VersionInfo` are created there, and the
+   API's connection uses it as the search path.
 
 ### Importing the old SQLite guestbook (once)
 

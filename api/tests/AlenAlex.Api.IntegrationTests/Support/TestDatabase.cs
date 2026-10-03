@@ -32,7 +32,7 @@ public sealed class TestDatabase : IAsyncDisposable
         return db;
     }
 
-    public void Migrate() => new DatabaseMigrator(ConnectionString, NullLoggerFactory.Instance).MigrateUp();
+    public void Migrate() => new DatabaseMigrator(ConnectionString, AlenAlex.Api.Options.DatabaseOptions.DefaultSchema, NullLoggerFactory.Instance).MigrateUp();
 
     public async Task ExecuteAsync(string sql)
     {

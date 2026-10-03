@@ -2,6 +2,7 @@ using System.Data.Common;
 using AlenAlex.Api.Infrastructure.Persistence.Migrations;
 using FluentMigrator;
 using FluentMigrator.Runner;
+using FluentMigrator.Runner.Conventions;
 using FluentMigrator.Runner.Initialization;
 using FluentMigrator.Runner.Processors.Postgres;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -15,10 +16,10 @@ namespace AlenAlex.Api.Infrastructure.Persistence;
 /// and <see cref="AotPostgresDbFactory"/> returns <see cref="NpgsqlFactory.Instance"/> directly.
 /// The runner gets its own service provider so its services stay out of the app's.
 /// </summary>
-public sealed class DatabaseMigrator(string connectionString, ILoggerFactory loggerFactory)
+public sealed class DatabaseMigrator(string connectionString, string schema, ILoggerFactory loggerFactory)
 {
-    public DatabaseMigrator(IConfiguration configuration, ILoggerFactory loggerFactory)
-        : this(Postgres.GuestbookConnectionString.FromConfiguration(configuration), loggerFactory)
+    public DatabaseMigrator(IConfiguration configuration, Microsoft.Extensions.Options.IOptions<Options.DatabaseOptions> options, ILoggerFactory loggerFactory)
+        : this(Postgres.GuestbookConnectionString.FromConfiguration(configuration), options.Value.Schema, loggerFactory)
     {
     }
 
@@ -35,11 +36,12 @@ public sealed class DatabaseMigrator(string connectionString, ILoggerFactory log
             .AddLogging()
             .AddFluentMigratorCore()
             .ConfigureRunner(runner => runner
-                .AddPostgres15_0()
+                .AddPostgres()
                 .WithGlobalConnectionString(connectionString));
 
         services.Replace(ServiceDescriptor.Scoped<PostgresDbFactory, AotPostgresDbFactory>());
         services.Replace(ServiceDescriptor.Scoped<IFilteringMigrationSource, ExplicitMigrationSource>());
+        services.Replace(ServiceDescriptor.Singleton<IConventionSet>(new DefaultConventionSet(schema, workingDirectory: null)));
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();

@@ -11,9 +11,20 @@ public static class GuestbookConnectionString
 {
     public const string Name = "Guestbook";
 
-    public static string FromConfiguration(IConfiguration configuration) =>
-        Normalize(configuration.GetConnectionString(Name)
-            ?? throw new InvalidOperationException($"Missing connection string ConnectionStrings:{Name}"));
+    public static string FromConfiguration(IConfiguration configuration)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(Normalize(configuration.GetConnectionString(Name)
+            ?? throw new InvalidOperationException($"Missing connection string ConnectionStrings:{Name}")))
+        {
+            // unqualified table names in queries resolve to the configured schema
+            SearchPath = configuration[$"{AlenAlex.Api.Options.DatabaseOptions.SectionName}:Schema"] is { Length: > 0 } schema
+                ? schema
+                : AlenAlex.Api.Options.DatabaseOptions.DefaultSchema,
+            // Kerberos isn't used; the default "Prefer" probes libgssapi, which the image doesn't ship
+            GssEncryptionMode = GssEncryptionMode.Disable,
+        };
+        return builder.ConnectionString;
+    }
 
     /// <summary>Converts a <c>postgres://</c> / <c>postgresql://</c> URI to Npgsql key-values; anything else is returned unchanged.</summary>
     public static string Normalize(string value)
