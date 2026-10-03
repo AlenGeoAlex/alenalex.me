@@ -1,0 +1,50 @@
+/* Inside a reading surface (.reader) the notice takes the reader's palette, so it works on light paper too. */
+:host {
+  --o-ink: var(--r-ink, var(--color-ink));
+  --o-ink-2: var(--r-ink-2, var(--color-ink-2));
+  --o-ink-3: var(--r-ink-3, var(--color-ink-3));
+  --o-rule: var(--r-rule, var(--color-rule-2));
+  --o-fill: var(--r-code, var(--color-ground-2));
+  --o-accent: var(--r-accent, var(--color-signal));
+  --o-spark: var(--r-warn, var(--color-chrome));
+}
+
+/* SVG animation: keyframes have no Tailwind equivalent, so they live here. */
+.node { fill: var(--o-fill); stroke: var(--o-ink-2); stroke-width: 1; }
+.node-down { stroke: var(--o-ink-3); stroke-dasharray: 3 3; fill: transparent; }
+.label { fill: var(--o-ink-2); font: 10px var(--font-mono); text-anchor: middle; }
+.label-dim { fill: var(--o-ink-3); }
+.face { fill: var(--o-accent); font: 500 11px var(--font-mono); text-anchor: middle; animation: blink 3.2s steps(1) infinite; }
+.wire { stroke: var(--o-ink-2); stroke-width: 1; fill: none; }
+.fray path { stroke: var(--o-ink-3); stroke-width: 1; fill: none; }
+.fray-left { transform-origin: 164px 48px; animation: sway 2.8s ease-in-out infinite; }
+.fray-right { transform-origin: 200px 48px; animation: sway 3.1s ease-in-out infinite reverse; }
+.packet { animation: travel 2.8s var(--ease-out-expo) infinite; }
+.packet rect { fill: var(--o-accent); }
+.sparks { opacity: 0; transform-origin: 166px 48px; animation: spark 2.8s linear infinite; }
+.sparks path { stroke: var(--o-spark); stroke-width: 1.2; stroke-linecap: square; }
+
+/* the packet runs out along the wire, hits the break, drops and fades */
+@keyframes travel {
+  0% { transform: translate(86px, 48px); opacity: 0; }
+  8% { opacity: 1; }
+  46% { transform: translate(158px, 48px); opacity: 1; animation-timing-function: ease-in; }
+  54% { transform: translate(162px, 50px) rotate(14deg); opacity: 1; }
+  78% { transform: translate(166px, 86px) rotate(70deg); opacity: 0; }
+  100% { transform: translate(166px, 86px); opacity: 0; }
+}
+@keyframes spark {
+  0%, 45% { opacity: 0; transform: scale(0.3); }
+  48% { opacity: 1; transform: scale(1); }
+  60% { opacity: 0; transform: scale(1.35); }
+  100% { opacity: 0; }
+}
+@keyframes sway { 50% { transform: rotate(9deg); } }
+@keyframes blink { 0%, 92% { opacity: 1; } 94%, 97% { opacity: 0.15; } }
+
+/* reduced motion: one still frame, the packet stopped at the break */
+@media (prefers-reduced-motion: reduce) {
+  .packet { animation: none; transform: translate(158px, 48px); }
+  .sparks { animation: none; opacity: 1; }
+  .fray, .face { animation: none; }
+}

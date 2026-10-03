@@ -1,0 +1,35 @@
+<div role="status"
+  class="mx-auto grid max-w-[34rem] justify-items-center gap-4 border border-dashed border-(--o-rule) px-4 py-5 text-center @[24rem]:gap-6 @[24rem]:px-7 @[24rem]:py-8">
+  <svg class="h-auto w-full max-w-[22rem] overflow-visible" viewBox="0 0 360 96" aria-hidden="true">
+    <!-- the site -->
+    <rect class="node" x="1" y="30" width="78" height="36" />
+    <text x="40" y="52" class="label">alenalex.me</text>
+
+    <!-- the wire, snapped in the middle -->
+    <path class="wire" d="M79 48 H164" />
+    <path class="wire" d="M200 48 H279" />
+    <g class="fray fray-left"><path d="M164 48 l6 -4" /><path d="M164 48 l7 1" /><path d="M164 48 l5 5" /></g>
+    <g class="fray fray-right"><path d="M200 48 l-6 4" /><path d="M200 48 l-7 -2" /><path d="M200 48 l-5 -5" /></g>
+
+    <!-- the request -->
+    <g class="packet"><rect x="-7" y="-4" width="14" height="8" /></g>
+    <g class="sparks"><path d="M166 48 l9 -11" /><path d="M166 48 l12 -2" /><path d="M166 48 l8 10" /><path d="M166 48 l3 -13" /></g>
+
+    <!-- the api, dark -->
+    <rect class="node node-down" x="279" y="30" width="80" height="36" />
+    <text x="319" y="45" class="label label-dim">api</text>
+    <text x="319" y="59" class="face">x_x</text>
+  </svg>
+
+  <div class="min-w-0">
+    <p class="text-sm break-words text-(--o-ink)">{{ request() }}</p>
+    <p class="mt-1 text-sm text-(--o-accent)"><span class="text-(--o-ink-3)">→ </span>{{ error() }}</p>
+    <p class="mx-auto mt-3 max-w-[46ch] text-sm text-(--o-ink-3) empty:hidden"><ng-content /></p>
+    @if (retryable()) {
+      <button type="button" (click)="retry.emit()"
+        class="mt-4 border border-(--o-rule) px-3.5 py-1.5 text-xs tracking-[0.06em] text-(--o-ink-2) transition-colors hover:border-(--o-ink-2) hover:text-(--o-ink)">
+        retry request
+      </button>
+    }
+  </div>
+</div>

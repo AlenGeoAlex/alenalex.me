@@ -1,0 +1,73 @@
+<div class="reader w-[min(36rem,calc(100vw-2rem))] border border-(--r-rule) bg-(--r-bg) text-(--r-ink) shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7)]"
+  [attr.data-theme]="reader.theme()">
+  <header class="flex items-start justify-between gap-4 border-b border-(--r-rule) px-5 py-4">
+    <div class="min-w-0">
+      <h2 id="revisions-title" class="caps m-0 font-normal text-(--r-ink-3)">revisions</h2>
+      <p class="mt-1 mb-0 truncate font-serif text-xl italic">{{ data.title }}</p>
+    </div>
+    <button type="button" (click)="close()" aria-label="Close revisions"
+      class="grid size-8 shrink-0 place-items-center border border-(--r-rule) text-(--r-ink-2) hover:border-(--r-ink-3) hover:text-(--r-ink)">
+      <svg viewBox="0 0 16 16" aria-hidden="true" class="size-3.5 fill-none stroke-current stroke-[1.4]"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+    </button>
+  </header>
+
+  <div class="max-h-[min(64vh,34rem)] overflow-y-auto px-5 py-5 text-sm">
+    @switch (revisions().state) {
+      @case ('loading') {
+        <ol class="relative m-0 grid list-none gap-5 p-0 pl-8" aria-label="Loading revisions">
+          <span aria-hidden="true" class="absolute top-1 bottom-1 left-[0.55rem] border-l border-dotted border-(--r-ink-3)"></span>
+          @for (i of [1, 2, 3]; track i) {
+            <li class="relative">
+              <span aria-hidden="true" class="absolute top-1.5 -left-[1.82rem] size-2.5 rounded-full border border-(--r-ink-3) bg-(--r-bg)"></span>
+              <span class="block h-11 animate-pulse bg-(--r-rule)/70"></span>
+            </li>
+          }
+        </ol>
+      }
+      @case ('offline') {
+        <app-offline-notice request="GET /api/posts/history?time-travel=please" [error]="describe($any(revisions()).reason)" (retry)="load()">
+          The history can't be fetched right now. The published version is still right here.
+        </app-offline-notice>
+      }
+      @default {
+        <!-- newest first -->
+        <ol class="relative m-0 grid list-none gap-1 p-0 pl-8">
+          <span aria-hidden="true" class="absolute top-3 bottom-3 left-[0.55rem] border-l border-dotted border-(--r-ink-3)"></span>
+
+          <li class="relative">
+            <span aria-hidden="true" class="absolute top-[0.95rem] -left-[1.86rem] size-3 border"
+              [class]="readingPublished ? 'border-(--r-accent) bg-(--r-accent)' : 'border-(--r-ink-2) bg-(--r-bg)'"></span>
+            <button type="button" (click)="open(null)"
+              class="grid w-full gap-0.5 border border-transparent px-3 py-2.5 text-left transition-colors hover:border-(--r-rule) hover:bg-(--r-rule)/30"
+              [attr.aria-current]="readingPublished ? 'true' : null">
+              <span class="flex items-baseline gap-3">
+                <span class="cat text-[0.7rem]" [class]="readingPublished ? 'text-(--r-accent)' : 'text-(--r-ink)'">published</span>
+                @if (readingPublished) { <span class="text-xs text-(--r-ink-3)">· you're reading this</span> }
+              </span>
+              <span class="text-(--r-ink-2)">the version on the site</span>
+            </button>
+          </li>
+
+          @for (rev of $any(revisions()).data; track rev.sha) {
+            <li class="relative">
+              <span aria-hidden="true" class="absolute top-[0.95rem] -left-[1.82rem] size-2.5 rounded-full border"
+                [class]="isCurrent(rev) ? 'border-(--r-accent) bg-(--r-accent)' : 'border-(--r-ink-2) bg-(--r-bg)'"></span>
+              <button type="button" (click)="open(rev.sha)"
+                class="grid w-full gap-0.5 border border-transparent px-3 py-2.5 text-left transition-colors hover:border-(--r-rule) hover:bg-(--r-rule)/30"
+                [attr.aria-current]="isCurrent(rev) ? 'true' : null">
+                <span class="flex flex-wrap items-baseline gap-x-3">
+                  <span class="font-medium" [class]="isCurrent(rev) ? 'text-(--r-accent)' : 'text-(--r-ink)'">{{ rev.shortSha }}</span>
+                  <time class="text-xs text-(--r-ink-3)" [attr.datetime]="rev.date">{{ rev.date }}</time>
+                  @if (isCurrent(rev)) { <span class="text-xs text-(--r-ink-3)">· you're reading this</span> }
+                </span>
+                <span class="text-(--r-ink-2)">{{ rev.message }}</span>
+              </button>
+            </li>
+          } @empty {
+            <li class="px-3 py-2 text-(--r-ink-3)">no history found.</li>
+          }
+        </ol>
+      }
+    }
+  </div>
+</div>

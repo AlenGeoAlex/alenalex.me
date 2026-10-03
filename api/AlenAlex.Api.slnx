@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AlenAlex.Api/AlenAlex.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AlenAlex.Api.IntegrationTests/AlenAlex.Api.IntegrationTests.csproj" />
+    <Project Path="tests/AlenAlex.Api.Tests/AlenAlex.Api.Tests.csproj" />
+  </Folder>
+</Solution>

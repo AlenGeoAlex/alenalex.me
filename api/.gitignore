@@ -1,0 +1,10 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+.env
+*.user
+.vs/
+.idea/
+compose.env

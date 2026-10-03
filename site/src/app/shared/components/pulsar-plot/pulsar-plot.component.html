@@ -1,0 +1,27 @@
+<figure class="m-0 grid h-full grid-rows-[auto_1fr]">
+  <figcaption class="flex flex-wrap justify-between gap-x-6 gap-y-1 border-b border-rule pb-3 text-xs tracking-[0.04em] text-ink-3">
+    <span class="min-h-[1.6em] text-ink-2" aria-live="polite">
+      @if (selected(); as week) {
+        <span class="mr-2.5 inline-block h-[0.55em] w-[0.9em] bg-signal"></span>week of {{ week.days[0].date }} ·
+        <b class="font-medium text-ink">{{ week.total }}</b> contribution{{ week.total === 1 ? '' : 's' }}
+      } @else {
+        @switch (state()) {
+          @case ('loading') { acquiring signal from github… }
+          @case ('offline') { <span class="text-ink-3">no signal from github right now, so the lines lie flat</span> }
+          @default {
+            {{ yearTotal() | number }} contributions in the last year
+            @if (busiest(); as b) {
+              @if (b.total > 0) { · busiest: week of {{ b.days[0].date }} }
+            }
+          }
+        }
+      }
+    </span>
+    <span>fig. 1 · one line per week, newest at the front</span>
+  </figcaption>
+
+  <div #stage class="relative min-h-0 cursor-crosshair touch-pan-y"
+    (pointermove)="onPointer($event)" (click)="onPointer($event)" (pointerleave)="onLeave()">
+    <canvas #canvas class="absolute inset-0 block h-full w-full" aria-hidden="true"></canvas>
+  </div>
+</figure>

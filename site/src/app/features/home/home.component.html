@@ -1,0 +1,82 @@
+<div class="grid grid-cols-1 gap-x-[clamp(1.5rem,4vw,4rem)] pt-[clamp(1.5rem,4vh,3rem)] pb-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+
+  <section class="self-center pt-6 lg:pt-8 lg:pb-28" aria-labelledby="who">
+    <p class="prompt m-0 text-sm text-ink-2">whoami</p>
+    <h1 id="who" class="mt-3.5 mb-5 font-serif text-[clamp(3rem,6.4vw,5.5rem)] leading-none font-normal tracking-[-0.015em] italic">Alen Alex.</h1>
+    <p class="m-0 max-w-[52ch] text-sm text-ink-2">{{ site.role }}</p>
+    <p class="mt-1.5 mb-0 max-w-[52ch] text-sm text-ink">{{ site.line }}</p>
+
+    <ul class="mt-9 mb-0 grid list-none gap-1.5 border-t border-rule p-0 pt-5 text-xs text-ink-2" aria-label="System check">
+      <li class="grid grid-cols-[7ch_minmax(0,1fr)] gap-[0.6ch]">
+        <span class="whitespace-pre text-ink-3">[ <b class="font-medium text-ink">OK</b> ]</span>{{ site.focus }}
+      </li>
+      <li class="grid grid-cols-[7ch_minmax(0,1fr)] gap-[0.6ch]">
+        <span class="whitespace-pre text-ink-3">[ <b class="font-medium text-ink">OK</b> ]</span>stack: {{ site.stack.join(' · ') }}
+      </li>
+      <li class="grid grid-cols-[7ch_minmax(0,1fr)] gap-[0.6ch]">
+        <span class="whitespace-pre text-ink-3">[ <b class="font-medium" [class]="servicesLine().warn ? 'text-chrome' : 'text-ink'">{{ servicesLine().tag }}</b> ]</span>{{ servicesLine().text }}
+      </li>
+      <li class="grid grid-cols-[7ch_minmax(0,1fr)] gap-[0.6ch]">
+        <span class="whitespace-pre text-ink-3">[<b class="font-medium text-chrome">WARN</b>]</span>caffeine_reserves: critically low · non-fatal
+      </li>
+    </ul>
+  </section>
+
+  <div class="relative mt-6 h-[clamp(20rem,78vw,32rem)] lg:mt-0 lg:h-[clamp(30rem,calc(100dvh-9rem),50rem)]">
+    <app-pulsar-plot class="absolute inset-0" [weeks]="plot().weeks" [state]="plot().state" [total]="plot().total" />
+  </div>
+
+  <!-- negative margin pulls these panels up over the bottom of the plot -->
+  <div class="relative z-[1] -mt-16 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 lg:col-span-2 lg:-mt-26 xl:grid-cols-3">
+
+    <section class="glass flex min-w-0 flex-col gap-3.5 p-5 md:col-span-2 xl:col-span-1" aria-labelledby="writing-heading">
+      <div class="flex min-h-6 items-baseline justify-between">
+        <h2 id="writing-heading" class="caps m-0 font-normal">writing</h2>
+        <span class="text-xs text-ink-3">{{ postCount }} post{{ postCount === 1 ? '' : 's' }}</span>
+      </div>
+      @if (latest.length) {
+        <ol class="m-0 list-none border-t border-rule p-0">
+          @for (post of latest; track post.path) {
+            <li>
+              <a [routerLink]="'/writing/' + post.path"
+                class="group grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 border-b border-rule py-3 no-underline">
+                <span class="cat text-[0.7rem] text-ink-3 transition-colors group-hover:text-signal">{{ post.no | catalogNo: 'WR' }}</span>
+                <span class="font-serif text-[1.3rem] leading-tight italic decoration-1 underline-offset-[0.2em] group-hover:underline">{{ post.title }}</span>
+                <span class="col-start-2 flex flex-wrap gap-x-3 text-xs text-ink-3">
+                  <time [attr.datetime]="post.date">{{ post.date }}</time>
+                  @if (post.series; as series) {
+                    <span>part {{ post.partIndex }} · {{ series.title }}</span>
+                  }
+                </span>
+              </a>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="text-sm text-ink-2">nothing published yet. WR 001 is reserved.</p>
+      }
+      <div class="mt-auto flex flex-wrap gap-x-5 gap-y-1.5">
+        <a class="arrow-link" routerLink="/writing">writing /all</a>
+        <a class="arrow-link" routerLink="/work">work /repos</a>
+        <a class="arrow-link" routerLink="/now">cat now.md</a>
+      </div>
+    </section>
+
+    <section class="glass min-w-0 p-5" aria-label="Live status">
+      <app-live-panel />
+    </section>
+
+    <section class="glass flex min-w-0 flex-col gap-3.5 p-5" aria-labelledby="guestbook-heading">
+      <div class="flex min-h-6 items-baseline justify-between">
+        <h2 id="guestbook-heading" class="caps m-0 font-normal">guestbook</h2>
+        @if (guestbook.acceptedCount(); as count) {
+          <span class="text-xs text-ink-3">{{ count }} note{{ count === 1 ? '' : 's' }} filed</span>
+        }
+      </div>
+      <app-guestbook-composer />
+      <app-guestbook-entries [limit]="2"
+        class="[&:has(ol)]:max-h-34 [&:has(ol)]:overflow-hidden [&:has(ol)]:mask-[linear-gradient(#000_65%,transparent)]" />
+      <a class="arrow-link mt-auto" routerLink="/guestbook">guestbook /all</a>
+    </section>
+  </div>
+</div>

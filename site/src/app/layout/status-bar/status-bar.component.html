@@ -1,0 +1,17 @@
+<footer class="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-rule px-[clamp(1rem,3vw,2.5rem)] py-3 text-xs text-ink-3">
+  <span class="inline-flex items-center gap-2.5">
+    <span aria-hidden="true" class="size-2 border"
+      [class]="live.apiUp() === true ? 'border-ink bg-ink' : live.apiUp() === false ? 'border-signal' : 'border-ink-3'"></span>
+    @switch (live.apiUp()) {
+      @case (true) { systems nominal }
+      @case (false) { <span class="text-ink-2">live data offline · pages unaffected</span> }
+      @default { checking systems… }
+    }
+  </span>
+  <span>{{ clock.corkTime() }} cork</span>
+  <span class="ml-auto flex gap-5">
+    <a class="text-ink-2 no-underline hover:text-ink" href="https://github.com/{{ site.github }}" target="_blank" rel="noopener">github</a>
+    <a class="text-ink-2 no-underline hover:text-ink" href="https://linkedin.com/in/{{ site.linkedin }}" target="_blank" rel="noopener">linkedin</a>
+    <a class="text-ink-2 no-underline hover:text-ink" href="/feed.xml">rss</a>
+  </span>
+</footer>

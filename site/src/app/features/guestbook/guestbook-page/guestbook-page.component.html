@@ -1,0 +1,15 @@
+<article class="max-w-6xl py-[clamp(2rem,5vh,3.5rem)] pb-12">
+  <app-page-header title="guestbook" no="ALX 030" command="tail -f guestbook.log" object="guestbook">
+    <p class="mt-2.5 max-w-[56ch] text-sm text-ink-2">
+      Leave a trace. Every note gets a number, waits for a quick look, then joins the log.
+    </p>
+  </app-page-header>
+  <div class="grid items-start gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+    <section class="glass p-5 lg:sticky lg:top-8" aria-label="Sign the guestbook">
+      <app-guestbook-composer />
+    </section>
+    <section aria-label="Notes">
+      <app-guestbook-entries />
+    </section>
+  </div>
+</article>

@@ -1,0 +1,78 @@
+name: site
+
+# Builds the Angular site and deploys it to Azure Static Web Apps. Also called by blog.yml
+# once a post's images are on R2. Posts are rendered from blogs/ by site/tools/build-content.mjs
+# (the `prebuild` script); the generator validates them first so a broken post fails with file:line errors.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A newer run waits rather than cancelling a deploy mid-upload.
+  group: site-deploy
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('generator/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Validate posts
+        working-directory: generator
+        env:
+          Posts__Directory: ../blogs
+        run: dotnet run -c Release --project src/AlenAlex.Generator -- validate
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        working-directory: site
+        run: npm ci
+
+      - name: Build
+        working-directory: site
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_BUSH_0AE817D00 }}
+          action: upload
+          app_location: site/dist/site/browser
+          output_location: ""
+          skip_app_build: true
+          skip_api_build: true

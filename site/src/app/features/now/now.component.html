@@ -1,0 +1,36 @@
+<article class="max-w-240 py-[clamp(2rem,5vh,3.5rem)] pb-12">
+  <app-page-header title="now" no="ALX 040" command="cat now.md" object="now">
+    <p class="mt-2.5 text-xs text-ink-3">last updated · June 2026</p>
+  </app-page-header>
+
+  <dl class="m-0">
+    <div class="grid grid-cols-1 gap-x-8 gap-y-1.5 border-b border-rule py-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
+      <dt class="caps pt-0.5 sm:row-span-9">currently</dt>
+      <dd class="m-0 sm:col-start-2">
+        <a href="https://www.easetalk.com" target="_blank" rel="noopener">EaseTalk</a>
+        <span class="block text-xs text-ink-3">backend architect · clinical SLT platform</span>
+      </dd>
+      <dd class="m-0 sm:col-start-2">
+        <a href="https://www.ucc.ie" target="_blank" rel="noopener">MSc Computing Science</a>
+        <span class="block text-xs text-ink-3">University College Cork</span>
+      </dd>
+    </div>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-1.5 border-b border-rule py-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
+      <dt class="caps pt-0.5 sm:row-span-9">on the horizon</dt>
+      <dd class="m-0 sm:col-start-2"><a href="https://www.rust-lang.org" target="_blank" rel="noopener">Rust</a></dd>
+      <dd class="m-0 sm:col-start-2">GPU programming</dd>
+    </div>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-1.5 border-b border-rule py-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
+      <dt class="caps pt-0.5 sm:row-span-9">outside the terminal</dt>
+      <dd class="m-0 sm:col-start-2">Getting fit</dd>
+      <dd class="m-0 sm:col-start-2">Learning to skydive</dd>
+    </div>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-1.5 border-b border-rule py-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
+      <dt class="caps pt-0.5 sm:row-span-9">get in touch</dt>
+      <dd class="m-0 sm:col-start-2"><span class="text-ink-3">email </span><a href="mailto:{{ site.email }}">{{ site.email }}</a></dd>
+      <dd class="m-0 sm:col-start-2"><span class="text-ink-3">github </span><a href="https://github.com/{{ site.github }}" target="_blank" rel="noopener">{{ site.github }}</a></dd>
+      <dd class="m-0 sm:col-start-2"><span class="text-ink-3">linkedin </span><a href="https://linkedin.com/in/{{ site.linkedin }}" target="_blank" rel="noopener">{{ site.linkedin }}</a></dd>
+      <dd class="m-0 sm:col-start-2"><span class="text-ink-3">discord </span><a href="https://discord.com/users/{{ site.discord }}" target="_blank" rel="noopener">&#64;{{ site.discord }}</a></dd>
+    </div>
+  </dl>
+</article>

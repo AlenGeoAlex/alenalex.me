@@ -1,0 +1,73 @@
+<article class="relative -mx-[clamp(1rem,3vw,2.5rem)] overflow-hidden px-[clamp(1rem,3vw,2.5rem)] pt-[clamp(1.5rem,5vh,3.5rem)] pb-14">
+  <app-particle-globe class="absolute -top-24 -right-40 size-[min(110vw,42rem)] opacity-60 sm:-right-24 lg:-top-28 lg:right-[4%] lg:opacity-80" />
+
+  <header class="relative border-b border-rule pb-10">
+    <p class="cat mt-0 mb-10 text-[0.8rem] text-ink-3">
+      <a routerLink="/writing" class="text-ink-2 no-underline hover:text-signal">writing</a>
+      <span class="mx-2">/</span>{{ series().no ? (series().no | catalogNo: 'SR') : 'draft series' }}
+    </p>
+
+    @if (series().draft) {
+      <p class="mb-6 inline-flex flex-wrap items-center gap-x-3 border border-dashed border-chrome px-3 py-2 text-xs text-ink-2">
+        <span class="text-chrome">draft series</span> not published yet: it's only reachable by this link.
+      </p>
+    }
+
+    <p class="caps mt-0 mb-4">a series in {{ parts().length }} part{{ parts().length === 1 ? '' : 's' }}</p>
+    <h1 class="m-0 max-w-[18ch] font-serif text-[clamp(2.6rem,7vw,6rem)] leading-[0.98] font-normal tracking-[-0.015em] italic">{{ series().title }}</h1>
+    @if (series().description) {
+      <p class="mt-6 mb-0 max-w-[60ch] text-sm text-ink-2">{{ series().description }}</p>
+    }
+    <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-ink-3">
+      <span>started <time class="text-ink" [attr.datetime]="series().date">{{ series().date }}</time></span>
+      @if (series().updated !== series().date) {
+        <span>updated <time class="text-ink" [attr.datetime]="series().updated">{{ series().updated }}</time></span>
+      }
+      @if (totalMinutes()) {
+        <span><span class="text-ink">{{ totalMinutes() }} min</span> in total</span>
+      }
+      @if (series().tags.length) {
+        <ul class="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Tags">
+          @for (tag of series().tags; track tag) {
+            <li><app-tag-chip [tag]="tag" class="text-ink-2">{{ tag }}</app-tag-chip></li>
+          }
+        </ul>
+      }
+    </div>
+    @if (parts()[0]; as first) {
+      <a [routerLink]="'/writing/' + first.path"
+        class="mt-8 inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-sm font-medium text-ground no-underline transition-colors hover:border-signal hover:bg-signal">
+        start reading <span aria-hidden="true">→</span> part 1
+      </a>
+    }
+  </header>
+
+  @if (series().cover) {
+    <img [src]="series().cover" alt="" class="relative mt-10 max-h-[28rem] w-full border border-rule object-cover" loading="lazy" decoding="async" />
+  }
+
+  @if (parts().length) {
+    <ol class="relative mt-10 mb-0 grid max-w-4xl list-none gap-2 p-0 pl-10" aria-label="Parts">
+      <span aria-hidden="true" class="absolute top-6 bottom-6 left-[0.7rem] border-l border-dotted border-ink-3"></span>
+      @for (part of parts(); track part.path) {
+        <li class="relative">
+          <span aria-hidden="true" class="absolute top-[1.55rem] -left-[2.15rem] grid size-5 place-items-center rounded-full border border-ink-2 bg-ground text-[0.6rem] text-ink">{{ part.partIndex }}</span>
+          <a [routerLink]="'/writing/' + part.path"
+            class="group grid gap-2 border border-transparent px-4 py-4 no-underline transition-colors hover:border-rule hover:bg-ground-2/60">
+            <span class="flex flex-wrap items-baseline gap-x-4 text-xs text-ink-3">
+              <span class="cat text-[0.7rem] transition-colors group-hover:text-signal">part {{ part.partIndex }}</span>
+              <time [attr.datetime]="part.date">{{ part.date }}</time>
+              <span>{{ part.readingMinutes }} min</span>
+            </span>
+            <span class="font-serif text-[clamp(1.4rem,3vw,2rem)] leading-[1.1] italic decoration-1 underline-offset-[0.18em] group-hover:underline">{{ part.title }}</span>
+            @if (part.excerpt) {
+              <span class="max-w-[62ch] text-sm text-ink-2">{{ part.excerpt }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ol>
+  } @else {
+    <p class="mt-10 text-sm text-ink-2">no parts published yet.</p>
+  }
+</article>

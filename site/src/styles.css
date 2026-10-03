@@ -1,0 +1,149 @@
+@import 'tailwindcss';
+@import '@angular/cdk/overlay-prebuilt.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/michroma/400.css';
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/400-italic.css';
+@import './prose.css';
+
+@theme {
+  --color-ground: #0a0a0a;
+  --color-ground-2: #111110;
+  --color-ink: #f2f0ea;
+  --color-ink-2: #bdbbb3;
+  --color-ink-3: #8d8b84;
+  --color-rule: #262624;
+  --color-rule-2: #3a3936;
+
+  /* accent colours */
+  --color-signal: #e5412f;
+  --color-chrome: #f2c230;
+  --color-cobalt: #2f6fe8;
+  --color-bone: #f2f0ea;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-wide: 'Michroma', 'Eurostile', 'Microgramma', 'JetBrains Mono', sans-serif;
+  --font-serif: 'EB Garamond', 'Garamond', 'Iowan Old Style', Georgia, serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --breakpoint-xs: 30rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    scrollbar-color: var(--color-rule-2) var(--color-ground);
+    scrollbar-width: thin;
+  }
+  body {
+    min-height: 100dvh;
+    font-size: var(--text-base);
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+    background: var(--color-ground);
+  }
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-ground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-chrome);
+    outline-offset: 3px;
+  }
+  a {
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-rule-2);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+    transition: text-decoration-color 160ms var(--ease-out-expo), color 160ms var(--ease-out-expo);
+  }
+  a:hover {
+    text-decoration-color: currentColor;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  input, textarea {
+    caret-color: var(--color-signal);
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* wide caps for catalog numbers */
+@utility cat {
+  font-family: var(--font-wide);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* small uppercase labels */
+@utility caps {
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* a command: "$ whoami" */
+@utility prompt {
+  &::before {
+    content: '$ ';
+    color: var(--color-ink-3);
+  }
+}
+
+/* frosted panel, used over the plot and the sticky nav */
+@utility glass {
+  background: rgb(20 20 19 / 0.58);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 18px 40px -18px rgb(0 0 0 / 0.8);
+}
+
+/* "→ writing /all" */
+@utility arrow-link {
+  display: inline-flex;
+  gap: 0.5ch;
+  align-items: baseline;
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+  text-decoration: none;
+  &::before {
+    content: '→';
+    color: var(--color-ink-3);
+    transition: transform 200ms var(--ease-out-expo);
+  }
+  &:hover {
+    color: var(--color-ink);
+  }
+  &:hover::before {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

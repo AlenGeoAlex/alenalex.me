@@ -1,0 +1,106 @@
+name: blog
+
+# Tests the generator, validates every post, syncs post images to Cloudflare R2, then
+# calls site.yml to rebuild and deploy. The deploy waits for the sync, so pages never go
+# live before their images exist.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "blogs/**"
+      - "generator/**"
+      - ".github/workflows/blog.yml"
+  workflow_dispatch:
+    inputs:
+      changed_dirs:
+        description: "Comma-separated post folder names under blogs/ to sync, or * for all posts"
+        required: false
+        default: "*"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: generator
+    env:
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+      Posts__Directory: ../blogs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so diffing against `before` works for multi-commit pushes.
+          fetch-depth: 0
+
+      - name: Get changed post directories
+        id: changed
+        working-directory: .
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DIRS: ${{ inputs.changed_dirs }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            CHANGED="$INPUT_DIRS"
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            CHANGED="*"   # new branch / force push: no usable base, sync everything
+          else
+            # blogs/<folder>/... -> <folder>; files directly under blogs/ (NF == 2) are ignored.
+            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" -- 'blogs/' \
+              | awk -F/ 'NF > 2 { print $2 }' | sort -u | paste -sd, -)
+          fi
+          # Empty (e.g. only generator/ changed) means all posts; unchanged files are skipped
+          # by content hash, so that is cheap.
+          echo "Changed post dirs: ${CHANGED:-<all>}"
+          echo "dirs=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('generator/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      - name: Validate posts
+        run: dotnet run -c Release --no-build --project src/AlenAlex.Generator -- validate
+
+      - name: Sync assets to R2
+        run: dotnet run -c Release --no-build --project src/AlenAlex.Generator -- sync
+        env:
+          R2__AccountId: ${{ secrets.R2_ACCOUNT_ID }}
+          R2__AccessKey: ${{ secrets.R2_ACCESS_KEY }}
+          R2__SecretKey: ${{ secrets.R2_SECRET_KEY }}
+          R2__Bucket: ${{ secrets.R2_BUCKET }}
+          R2__PublicUrlBase: ${{ secrets.R2_PUBLIC_URL_BASE }}
+          Posts__Changed: ${{ steps.changed.outputs.dirs }}
+
+  deploy-site:
+    name: Deploy site
+    needs: sync
+    uses: ./.github/workflows/site.yml
+    secrets: inherit

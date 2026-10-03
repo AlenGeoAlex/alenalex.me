@@ -1,0 +1,48 @@
+<article class="max-w-6xl py-[clamp(2rem,5vh,3.5rem)] pb-12">
+  <app-page-header title="work" no="ALX 020" command="fetch --source github --sort=pushed" object="work">
+    <p class="mt-2.5 text-sm text-ink-2">
+      Public code on <a href="https://github.com/{{ site.github }}" target="_blank" rel="noopener">github.com/{{ site.github }}</a>,
+      numbered in the order it was started.
+    </p>
+  </app-page-header>
+
+  @switch (live.github().state) {
+    @case ('loading') {
+      <p class="text-sm text-ink-2">fetching repositories…</p>
+    }
+    @case ('offline') {
+      <app-offline-notice class="grid min-h-[50vh] content-center" request="GET /api/repos?all=pretty-please"
+        [error]="error()" (retry)="live.retryGithub()">
+        The repo list can't be fetched right now. Everything is still on
+        <a href="https://github.com/{{ site.github }}" target="_blank" rel="noopener">github.com/{{ site.github }}</a>.
+      </app-offline-notice>
+    }
+    @default {
+      <ol class="m-0 list-none p-0">
+        @for (item of repos(); track item.repo.name) {
+          <li>
+            <a [href]="item.repo.url" target="_blank" rel="noopener"
+              class="group grid grid-cols-1 items-baseline gap-2 border-b border-rule py-4 no-underline md:grid-cols-[6rem_minmax(0,1fr)_auto] md:gap-6">
+              <span class="cat text-xs text-ink-3 transition-colors group-hover:text-signal">{{ item.no | catalogNo: 'RP' }}</span>
+              <span class="grid gap-1">
+                <span class="text-lg">{{ item.repo.name }}</span>
+                @if (item.repo.description) {
+                  <span class="text-sm text-ink-2">{{ item.repo.description }}</span>
+                }
+              </span>
+              <span class="flex flex-wrap gap-x-5 text-xs whitespace-nowrap text-ink-3">
+                @if (item.repo.language) {
+                  <span class="inline-flex items-baseline gap-2"><app-signal-mark [hue]="item.hue" />{{ item.repo.language }}</span>
+                }
+                <span>{{ item.repo.stars }} ★</span>
+                <span>pushed {{ item.repo.pushedAt | timeAgo: clock.now() }}</span>
+              </span>
+            </a>
+          </li>
+        } @empty {
+          <li class="text-sm text-ink-2">no public repositories yet.</li>
+        }
+      </ol>
+    }
+  }
+</article>

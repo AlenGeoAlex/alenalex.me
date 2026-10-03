@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-# .githooks/pre-commit
-
-if git diff --cached --name-only | grep -q '^apps/portfolio-alpine/writing/'; then
-  echo "❌ apps/portfolio-alpine/writing/ is generated output — do not commit it manually."
-  echo "   Edit the source in blogs/posts/ instead; the generator will regenerate this via CI."
-  exit 1
-fi

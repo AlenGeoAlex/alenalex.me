@@ -1,0 +1,52 @@
+# The API on the homelab, behind api.alenalex.me (Cloudflare Tunnel or a reverse proxy).
+#
+#   cp compose.env.example compose.env      # fill in the secrets once
+#   docker compose up -d                    # run the published image from GHCR
+#   docker compose up -d --build            # or build it from this folder
+#   docker compose logs -f api
+#   docker compose pull && docker compose up -d   # update to the latest image
+#
+# Non-secret settings are below; secrets come from compose.env (gitignored).
+# See README "Configuration".
+
+name: alenalex
+
+services:
+  api:
+    image: ghcr.io/alengeoalex/alenalex-api:${API_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alenalex-api
+    restart: unless-stopped
+    env_file:
+      - path: compose.env
+        required: true
+    environment:
+      ConnectionStrings__Guestbook: "Data Source=/data/guestbook.db"
+      Api__IpHeader: "CF-Connecting-IP"
+      Api__AllowedOrigins__0: "https://alenalex.me"
+      Api__EnableScalar: "false"
+    ports:
+      # loopback only, the tunnel / reverse proxy is the public entry point
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    volumes:
+      - guestbook-data:/data
+
+    # the app only writes to /data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  guestbook-data:
+    name: alenalex-guestbook-data

@@ -4,3 +4,15 @@ dist/
 target/
 .idea/
 **.db
+
+Appsettings.Development.json
+# macOS
+.DS_Store
+
+# local AI/design tooling, not part of the project
+.impeccable/
+.claude/
+PRODUCT.md
+
+# the previous version, removed from the repo; local leftovers (old guestbook.db, .env files) stay here
+/apps/

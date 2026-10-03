@@ -1,0 +1,15 @@
+bin/
+obj/
+artifacts/
+publish/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+TestResults/
+.DS_Store
+.env
+
+# your own R2 keys for running sync locally
+src/AlenAlex.Generator/appsettings.Development.json

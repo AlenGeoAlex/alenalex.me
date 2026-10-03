@@ -1,1 +1,0 @@
-const INJECTED_WRITINGS = [{"hash":"8d9ca6","date":"2024-10-24","icon":"⚗️","title":"How did I use GitHub as CMS?","slug":"how-did-i-use-github-as-cms"}]

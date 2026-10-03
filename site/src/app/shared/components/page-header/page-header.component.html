@@ -1,0 +1,13 @@
+<header class="mb-8 flex items-end justify-between gap-6 border-b border-rule pb-6">
+  <div class="min-w-0">
+    <h1 class="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+      <span class="cat text-[clamp(2rem,5.5vw,3.75rem)] lowercase tracking-normal">{{ title() }}</span>
+      <span class="cat text-[0.8rem] tracking-[0.08em] text-ink-3">{{ no() }}</span>
+    </h1>
+    <p class="prompt mt-4 text-sm text-ink-2">
+      @for (word of words(); track $index) {<span class="whitespace-nowrap">{{ word }}</span>{{ ' ' }}}
+    </p>
+    <ng-content />
+  </div>
+  <app-section-object class="-mb-2 w-[84px]! sm:w-[132px]!" [name]="object()" [size]="132" />
+</header>

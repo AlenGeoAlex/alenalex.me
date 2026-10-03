@@ -1,0 +1,31 @@
+<div class="mb-3.5 flex min-h-6 items-baseline justify-between">
+  <h2 class="caps m-0 font-normal">live</h2>
+</div>
+
+<div class="mb-4 grid grid-cols-2 gap-3 border-b border-rule pb-4">
+  <div>
+    <p class="cat m-0 text-[0.95rem] tracking-[0.08em]" [attr.aria-label]="'Time in Cork: ' + clock.corkTime()">{{ clock.corkTime() }}</p>
+    <p class="mt-1 mb-0 text-xs text-ink-3">cork · alen</p>
+  </div>
+  <div>
+    <p class="cat m-0 text-[0.95rem] tracking-[0.08em] text-ink-2" [attr.aria-label]="'Your time: ' + clock.visitorTime()">{{ clock.visitorTime() }}</p>
+    <p class="mt-1 mb-0 text-xs text-ink-3">you</p>
+  </div>
+  @if (clock.now()) {
+    <p class="col-span-2 m-0 text-xs text-ink-2">{{ clock.difference() }}</p>
+  }
+</div>
+
+<dl class="m-0 grid gap-2">
+  @for (row of rows(); track row.key) {
+    <div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3 text-sm xs:grid-cols-[7.5rem_minmax(0,1fr)]">
+      <dt class="flex items-baseline gap-2.5 text-ink-2"><app-signal-mark [hue]="row.hue" [state]="row.state" />{{ row.key }}</dt>
+      <dd class="m-0 min-w-0">
+        <span [class]="row.state === 'on' ? 'text-ink' : 'text-ink-2'">{{ row.value }}</span>
+        @if (row.detail) {
+          <span class="block truncate text-xs text-ink-3">{{ row.detail }}</span>
+        }
+      </dd>
+    </div>
+  }
+</dl>

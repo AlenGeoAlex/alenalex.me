@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+tests/
+*.db
+*.db-*
+.env
+.git
+.vs/
+.idea/
+*.md
+**/appsettings.Development.json

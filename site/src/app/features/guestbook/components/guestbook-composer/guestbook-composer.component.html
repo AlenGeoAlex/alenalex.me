@@ -1,0 +1,38 @@
+<form class="grid gap-2.5" (submit)="submit($event)" novalidate>
+  <div class="flex items-baseline justify-between gap-4">
+    <label class="caps" for="gb-message">
+      sign as <b class="font-medium tracking-[0.02em] text-ink normal-case">{{ guestbook.name() }}</b>
+    </label>
+    <button type="button" (click)="guestbook.reroll()" aria-label="Pick a different random name"
+      class="group inline-flex items-center gap-1.5 py-1 text-xs tracking-[0.06em] text-ink-3 hover:text-ink">
+      <svg viewBox="0 0 16 16" aria-hidden="true"
+        class="size-[0.95em] fill-none stroke-current stroke-[1.4] transition-transform duration-400 ease-out-expo group-hover:rotate-[160deg]">
+        <path d="M13.5 8a5.5 5.5 0 1 1-1.7-3.98M13.5 2.5v3h-3" />
+      </svg>
+      reroll
+    </button>
+  </div>
+
+  <textarea id="gb-message" rows="3" placeholder="leave a note..." aria-describedby="gb-hint"
+    [attr.maxlength]="max" [value]="text()" (input)="text.set($any($event.target).value)"
+    (keydown.meta.enter)="submit($event)" (keydown.control.enter)="submit($event)"
+    class="min-h-18 w-full resize-y rounded-none border border-rule-2 bg-black/35 px-3 py-2.5 text-sm leading-relaxed placeholder:text-ink-3 placeholder:italic focus:border-ink-2 focus:outline-none"></textarea>
+
+  <div class="flex items-center justify-between gap-4">
+    <span id="gb-hint" class="text-xs" aria-live="polite"
+      [class]="guestbook.send().kind === 'error' ? 'text-signal' : 'text-ink-3'">
+      @switch (guestbook.send().kind) {
+        @case ('sending') { posting… }
+        @case ('sent') { filed as {{ $any(guestbook.send()).seq | catalogNo: 'GB' : 4 }} · pending moderation }
+        @case ('error') { {{ $any(guestbook.send()).message }} }
+        @default { {{ hint() }} }
+      }
+    </span>
+    <button type="submit" [disabled]="!valid() || guestbook.send().kind === 'sending'"
+      class="shrink-0 border border-ink bg-ink px-4 py-1.5 text-sm font-medium tracking-[0.04em] whitespace-nowrap text-ground transition-colors
+             hover:enabled:border-signal hover:enabled:bg-signal
+             disabled:cursor-not-allowed disabled:border-rule-2 disabled:bg-transparent disabled:text-ink-3">
+      post ↵
+    </button>
+  </div>
+</form>

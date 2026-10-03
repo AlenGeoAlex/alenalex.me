@@ -1,0 +1,6 @@
+# SQL safety checks, as build errors.
+[*.cs]
+# CA2100: CommandText must be a constant (no concatenation or interpolation).
+dotnet_diagnostic.CA2100.severity = error
+# CA3001: request data flowing into SQL text.
+dotnet_diagnostic.CA3001.severity = error
