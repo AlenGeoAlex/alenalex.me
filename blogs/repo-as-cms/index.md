@@ -11,8 +11,13 @@ Before writing any code I wrote down what I actually wanted from a blog:
 - **Drafts that are real pages.** I want to read a draft exactly as it will look when it's live, and send the link to someone, without it showing up in the list or in search.
 - **Series.** Some topics need more than one post, and the parts should know about each other.
 - **Static pages.** Each post should be plain HTML with its own title and preview card, so sharing a link on Discord or LinkedIn shows the right thing.
-- **Media content that don't bloat the repo's hosting.** They should come from a CDN, not from the static host.
+- **Media content that doesn't bloat the repo's hosting.** They should come from a CDN, not from the static host.
 - **Nothing to run.** No server that has to be up for the blog to work.
+
+And two nice-to-haves:
+
+- **Diagrams as text.** I'd rather write a diagram than export a PNG of one and keep it in sync by hand.
+- **Being upfront about AI.** If AI helped with a post, the post should say so.
 
 Everything below is just how those turned into a pipeline.
 
@@ -59,9 +64,10 @@ date: 2026-10-03
 published: false
 tags: ["github", "angular", "cloudflare", "ci-cd"]
 excerpt: "No admin panel, no database, no editor in the browser."
+ai-assist: true
 ```
 
-The URL comes from the title (`/writing/this-repo-is-my-cms`), the excerpt goes into the listing and the preview card, and `published` is the only switch I ever flip.
+The URL comes from the title (`/writing/this-repo-is-my-cms`), the excerpt goes into the listing and the preview card, and `published` is the only switch I ever flip. More on `ai-assist` further down.
 
 A folder without a `.meta` is ignored. That turns out to be handy: I can start dumping notes into a folder long before I've decided it's a post.
 
@@ -123,7 +129,7 @@ What gets deployed is just a folder of HTML, JS and JSON on Azure Static Web App
 
 This is the feature I wanted most and had to build least for.
 
-Every edit to a post is already a commit that touches its folder. So the **revisions** button on a post asks GitHub for the commits on `blogs/<folder>` and draws them as a timeline: date, commit message, short sha.
+Every edit to a post is already a commit. So the **revisions** button on a post asks GitHub for the commits that changed it and draws them as a timeline: date, commit message, short sha.
 
 Not every commit is worth showing, so the list is a little picky:
 
@@ -136,6 +142,35 @@ Not every commit is worth showing, so the list is a little picky:
 Clicking one opens the post at `?preview=<sha>`. That fetches the `.meta` and `index.md` *as they were at that commit*, renders them in the browser, and shows a banner saying which version you're looking at. Typos I fixed, paragraphs I cut, the first version of a post before someone told me it was wrong: all of it is still readable, and I never wrote a line of versioning code. It's also how I preview a branch before merging it.
 
 ![Its very first commit, opened from the timeline](assets/preview.png)
+
+## The two nice-to-haves
+
+### Diagrams in mermaid
+
+The flow diagram near the top isn't an image. It's a [mermaid](https://mermaid.js.org) code block in the markdown:
+
+````md
+```mermaid
+flowchart LR
+  W["write index.md"] --> M[".meta"] --> P["git push"]
+```
+````
+
+The build leaves those blocks alone, and the browser draws them when the post opens. Mermaid is only downloaded on posts that actually have a diagram, so every other page stays as light as it was. The diagrams use the site's fonts and colours and redraw when you switch between light and dark.
+
+The nicest part is that a diagram is just text. Changing it is a one-line diff, it shows up in the revisions like any other edit, and GitHub renders the same block when you look at the post's source there.
+
+### Saying when AI helped
+
+Every post can say whether AI was involved in writing it, with one line in `.meta`:
+
+```yaml
+ai-assist: true    # or false
+```
+
+`true` puts an **ai-assisted** mark next to the reading time, and hovering it says AI was used in some capacity to write the post. `false` shows **no ai** instead. If the key isn't there, nothing is shown, and the validator rejects anything that isn't `true` or `false`.
+
+I'd rather say it up front than leave you guessing. This post has it set to `true`, which you can see at the top.
 
 ## Shipping is a push
 
