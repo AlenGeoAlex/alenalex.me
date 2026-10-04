@@ -1,6 +1,7 @@
 title: "This repo is my CMS"
 date: 2026-10-03
-published: false
+published: true
+revisions-since: 2026-10-04
 tags: ["github", "angular", "cloudflare", "ci-cd"]
 excerpt: "No CMS and no database. The posts are just folders in this repo, and pushing to main publishes them."
 ai-assist: true

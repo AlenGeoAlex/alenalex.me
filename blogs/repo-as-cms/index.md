@@ -146,7 +146,7 @@ Clicking a commit opens the post with `?preview=<sha>`. That gets the `.meta` an
 
 ### Diagrams with mermaid
 
-The diagram at the top of this post isn't an image, it's a [mermaid](https://mermaid.js.org) code block in the markdown:
+The diagram at the top of this post isn't an image, it's a [mermaid](https://mermaid.ai/open-source/) code block in the markdown:
 
 ````md
 ```mermaid
