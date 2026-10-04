@@ -1,5 +1,6 @@
 using AlenAlex.Api.Features.Guestbook.ListPendingEntries;
 using AlenAlex.Api.Features.Guestbook.ModerateEntry;
+using AlenAlex.Api.Features.Guestbook.ReactToEntry;
 using AlenAlex.Api.Features.Guestbook.Shared;
 using AlenAlex.Api.Options;
 using Microsoft.Extensions.Options;
@@ -9,12 +10,13 @@ using NetCord.Rest;
 namespace AlenAlex.Api.Infrastructure.Discord;
 
 /// <summary>
-/// Slash commands and Approve/Reject buttons. Only <c>Discord:UserId</c> may moderate
-/// (anyone, if it's unset).
+/// Slash commands, Approve/Reject buttons and the reaction buttons that replace them once an entry
+/// is approved. Only <c>Discord:UserId</c> may moderate or react (anyone, if it's unset).
 /// </summary>
 public sealed class DiscordModerationHandler(
     ModerateEntryHandler moderate,
     ListPendingEntriesHandler listPending,
+    ReactToEntryHandler react,
     IOptions<DiscordOptions> options,
     ILogger<DiscordModerationHandler> logger)
 {
@@ -59,7 +61,8 @@ public sealed class DiscordModerationHandler(
                     await ReplyAsync(command, "Missing `id` option.");
                     return;
                 }
-                await ReplyAsync(command, (await ModerateAsync(id, "approved", () => moderate.ApproveAsync(id))).Text);
+                var outcome = await ModerateAsync(id, "approved", () => moderate.ApproveAsync(id));
+                await ReplyAsync(command, outcome.Text, outcome.Succeeded ? ModerationMessages.ReactionRows(id, []) : null);
                 break;
             }
             case "guestbook-reject":
@@ -71,6 +74,16 @@ public sealed class DiscordModerationHandler(
                 }
                 var reason = StringOption(command, "reason");
                 await ReplyAsync(command, (await ModerateAsync(id, "rejected", () => moderate.RejectAsync(id, reason))).Text);
+                break;
+            }
+            case "guestbook-react":
+            {
+                if (StringOption(command, "id") is not { } id)
+                {
+                    await ReplyAsync(command, "Missing `id` option.");
+                    return;
+                }
+                await ReactCommandAsync(command, id, StringOption(command, "reaction"));
                 break;
             }
             case "guestbook-pending":
@@ -112,9 +125,70 @@ public sealed class DiscordModerationHandler(
         await command.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties { Embeds = [embed] }));
     }
 
-    // Rewrites the embed to show the outcome and removes the buttons.
+    // Without a reaction: toggles it. With one: replies with the reaction buttons for the entry.
+    private async Task ReactCommandAsync(SlashCommandInteraction command, string id, string? reaction)
+    {
+        try
+        {
+            var reactions = reaction is null ? await react.GetAsync(id) : await react.ToggleAsync(id, reaction);
+            await ReplyAsync(command, $"Entry `{id}` reactions: {ModerationMessages.Describe(reactions)}", ModerationMessages.ReactionRows(id, reactions));
+        }
+        catch (GuestbookEntryNotFoundException)
+        {
+            await ReplyAsync(command, $"Entry `{id}` not found or not accepted");
+        }
+        catch (ArgumentException)
+        {
+            await ReplyAsync(command, $"Unknown reaction `{reaction}`");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Reacting to {EntryId} failed", id);
+            await ReplyAsync(command, $"Failed to update entry `{id}`");
+        }
+    }
+
+    // Toggles the reaction and redraws the buttons to match.
+    private async Task OnReactionButtonAsync(ButtonInteraction button, string reaction, string id)
+    {
+        if (!MayModerate(button.User))
+        {
+            await button.SendResponseAsync(InteractionCallback.Message(
+                new InteractionMessageProperties { Content = NotAllowed, Flags = MessageFlags.Ephemeral }));
+            return;
+        }
+
+        IReadOnlyList<string> reactions;
+        try
+        {
+            reactions = await react.ToggleAsync(id, reaction);
+        }
+        catch (Exception ex)
+        {
+            if (ex is not GuestbookEntryNotFoundException)
+            {
+                logger.LogError(ex, "Reacting to {EntryId} failed", id);
+            }
+            await button.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties
+            {
+                Content = ex is GuestbookEntryNotFoundException ? $"Entry `{id}` not found or not accepted" : $"Failed to update entry `{id}`",
+                Flags = MessageFlags.Ephemeral,
+            }));
+            return;
+        }
+
+        await button.SendResponseAsync(InteractionCallback.ModifyMessage(message =>
+            message.Components = ModerationMessages.ReactionRows(id, reactions)));
+    }
+
+    // Rewrites the embed to show the outcome; an approved entry gets the reaction buttons.
     private async Task OnButtonAsync(ButtonInteraction button)
     {
+        if (ModerationMessages.TryParseReactionButtonId(button.Data.CustomId, out var reaction, out var reactId))
+        {
+            await OnReactionButtonAsync(button, reaction, reactId);
+            return;
+        }
         if (!ModerationMessages.TryParseButtonId(button.Data.CustomId, out var action, out var id))
         {
             return;
@@ -134,7 +208,9 @@ public sealed class DiscordModerationHandler(
         var original = button.Message.Embeds.FirstOrDefault();
         await button.SendResponseAsync(InteractionCallback.ModifyMessage(message =>
         {
-            message.Components = [];
+            message.Components = outcome.Succeeded && action == ModerationMessages.ButtonAction.Approve
+                ? ModerationMessages.ReactionRows(id, [])
+                : [];
             if (original is null)
             {
                 message.Content = outcome.Text;
@@ -178,11 +254,11 @@ public sealed class DiscordModerationHandler(
     private static string? StringOption(SlashCommandInteraction command, string name) =>
         command.Data.Options.FirstOrDefault(o => o.Name == name)?.Value;
 
-    private async Task ReplyAsync(SlashCommandInteraction command, string message)
+    private async Task ReplyAsync(SlashCommandInteraction command, string message, IEnumerable<ActionRowProperties>? components = null)
     {
         try
         {
-            await command.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties { Content = message }));
+            await command.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties { Content = message, Components = components }));
         }
         catch (Exception ex)
         {

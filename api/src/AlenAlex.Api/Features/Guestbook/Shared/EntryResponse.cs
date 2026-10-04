@@ -11,6 +11,7 @@ public enum EntryStatus
 
 /// <param name="Seq">Stable sequential number, shown on the site as gb·0042.</param>
 /// <param name="Liked">Whether the caller has liked this entry.</param>
+/// <param name="Reactions">The owner's reactions, oldest first (keys of <see cref="GuestbookReactions"/>).</param>
 public sealed record EntryResponse(
     string Id,
     long Seq,
@@ -19,7 +20,8 @@ public sealed record EntryResponse(
     EntryStatus Status,
     DateTimeOffset CreatedAt,
     long LikeCount,
-    bool Liked)
+    bool Liked,
+    IReadOnlyList<string> Reactions)
 {
     /// <summary><c>null</c> for rejected entries, which are never sent to clients.</summary>
     public static EntryResponse? From(GuestbookEntry entry) => entry.Status switch
@@ -30,7 +32,8 @@ public sealed record EntryResponse(
     };
 
     private static EntryResponse Create(GuestbookEntry e, EntryStatus status) =>
-        new(e.Id, e.Seq, e.Name, e.Message, status, e.CreatedAt, e.LikeCount, e.Liked);
+        // a reaction removed from GuestbookReactions may still be in the database
+        new(e.Id, e.Seq, e.Name, e.Message, status, e.CreatedAt, e.LikeCount, e.Liked, e.Reactions.Where(GuestbookReactions.IsKnown).ToList());
 }
 
 public sealed record LikeResponse(long LikeCount, bool Liked)

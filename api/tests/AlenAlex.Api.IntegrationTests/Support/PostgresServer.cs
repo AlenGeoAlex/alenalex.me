@@ -37,7 +37,8 @@ public static class PostgresServer
     {
         try
         {
-            var container = new PostgreSqlBuilder(Image).Build();
+            // every test app keeps a small connection pool open, more than the default 100 allows
+            var container = new PostgreSqlBuilder(Image).WithCommand("-c", "max_connections=500").Build();
             await container.StartAsync();
             // Reaped by Testcontainers' resource reaper when the test process exits.
             return (container.GetConnectionString(), null);

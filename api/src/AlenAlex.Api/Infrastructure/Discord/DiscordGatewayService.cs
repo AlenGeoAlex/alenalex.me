@@ -1,3 +1,4 @@
+using AlenAlex.Api.Features.Status.RecordTrack;
 using AlenAlex.Api.Features.Status.Shared;
 using AlenAlex.Api.Options;
 using Microsoft.Extensions.Options;
@@ -15,6 +16,7 @@ public sealed class DiscordGatewayService(
     IOptions<DiscordOptions> options,
     LiveStatusStore status,
     DiscordModerationHandler moderation,
+    ListeningRecorder listening,
     ILoggerFactory loggerFactory) : BackgroundService
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<DiscordGatewayService>();
@@ -120,7 +122,7 @@ public sealed class DiscordGatewayService(
         {
             if (config.GuildId is { } guildId && config.UserId is { } ownerId && args.GuildId == guildId && args.Guild is { } guild)
             {
-                status.SetPresence(guild.Presences.TryGetValue(ownerId, out var presence)
+                SetPresence(guild.Presences.TryGetValue(ownerId, out var presence)
                     ? PresenceMapper.FromPresence(presence)
                     // Discord omits offline members from the initial presence list.
                     : new PresenceSnapshot(Connected: true, Status: null, Activity: null, Spotify: null));
@@ -132,11 +134,22 @@ public sealed class DiscordGatewayService(
         {
             if (presence.GuildId == config.GuildId && presence.User.Id == config.UserId)
             {
-                status.SetPresence(PresenceMapper.FromPresence(presence));
+                SetPresence(PresenceMapper.FromPresence(presence));
             }
             return default;
         };
 
         client.InteractionCreate += async interaction => await moderation.HandleAsync(interaction);
+    }
+
+    // A new song goes into the listening history; the same one again (pause, seek, status change) doesn't.
+    private void SetPresence(PresenceSnapshot snapshot)
+    {
+        var previous = status.Presence.Spotify;
+        status.SetPresence(snapshot);
+        if (snapshot.Spotify is { } track && !track.IsSameSong(previous))
+        {
+            listening.Record(track);
+        }
     }
 }

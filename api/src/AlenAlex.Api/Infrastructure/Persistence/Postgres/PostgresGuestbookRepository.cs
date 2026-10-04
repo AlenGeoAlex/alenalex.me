@@ -10,12 +10,15 @@ namespace AlenAlex.Api.Infrastructure.Persistence.Postgres;
 public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuestbookRepository
 {
     // Entry queries select the same columns in the order ReadEntriesAsync expects.
+    // Reactions come back comma-separated (keys are lowercase letters), oldest first.
 
     private const string ListVisibleSql =
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked
+               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked,
+               COALESCE((SELECT string_agg(r.reaction, ',' ORDER BY r.created_at, r.reaction)
+                         FROM guestbook_reactions r WHERE r.entry_id = e.id), '') AS reactions
         FROM guestbook_entries e
         WHERE e.status = 'accepted' OR (e.status = 'pending_approval' AND e.ip_hash = @viewer)
         ORDER BY e.created_at DESC, e.seq DESC
@@ -25,7 +28,9 @@ public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuest
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               FALSE AS liked
+               FALSE AS liked,
+               COALESCE((SELECT string_agg(r.reaction, ',' ORDER BY r.created_at, r.reaction)
+                         FROM guestbook_reactions r WHERE r.entry_id = e.id), '') AS reactions
         FROM guestbook_entries e
         WHERE e.status = 'pending_approval'
         ORDER BY e.created_at ASC, e.seq ASC
@@ -35,7 +40,9 @@ public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuest
         """
         SELECT e.id, e.seq, e.name, e.message, e.status, e.created_at,
                (SELECT COUNT(*) FROM guestbook_likes l WHERE l.entry_id = e.id) AS like_count,
-               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked
+               EXISTS (SELECT 1 FROM guestbook_likes l WHERE l.entry_id = e.id AND l.ip_hash = @viewer) AS liked,
+               COALESCE((SELECT string_agg(r.reaction, ',' ORDER BY r.created_at, r.reaction)
+                         FROM guestbook_reactions r WHERE r.entry_id = e.id), '') AS reactions
         FROM guestbook_entries e
         WHERE e.id = @id
         """;
@@ -67,6 +74,14 @@ public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuest
         INSERT INTO guestbook_likes (entry_id, ip_hash, created_at) VALUES (@entry, @ip, @created_at)
         ON CONFLICT (entry_id, ip_hash) DO NOTHING
         """;
+
+    private const string AddReactionSql =
+        """
+        INSERT INTO guestbook_reactions (entry_id, reaction, created_at) VALUES (@entry, @reaction, @created_at)
+        ON CONFLICT (entry_id, reaction) DO NOTHING
+        """;
+
+    private const string RemoveReactionSql = "DELETE FROM guestbook_reactions WHERE entry_id = @entry AND reaction = @reaction";
 
     private const string RemoveLikeSql = "DELETE FROM guestbook_likes WHERE entry_id = @entry AND ip_hash = @ip";
 
@@ -170,6 +185,22 @@ public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuest
         return new LikeState(reader.GetInt64(0), reader.GetBoolean(1));
     }
 
+    public async Task AddReactionAsync(string entryId, string reaction, DateTimeOffset createdAt, CancellationToken ct = default)
+    {
+        await using var command = session.CreateCommand();
+        command.CommandText = AddReactionSql;
+        command.WithText("entry", entryId).WithText("reaction", reaction).WithTimestamp("created_at", createdAt);
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task RemoveReactionAsync(string entryId, string reaction, CancellationToken ct = default)
+    {
+        await using var command = session.CreateCommand();
+        command.CommandText = RemoveReactionSql;
+        command.WithText("entry", entryId).WithText("reaction", reaction);
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
     private static async Task<IReadOnlyList<GuestbookEntry>> ReadEntriesAsync(NpgsqlCommand command, CancellationToken ct)
     {
         await using var reader = await command.ExecuteReaderAsync(ct);
@@ -184,7 +215,8 @@ public sealed class PostgresGuestbookRepository(INpgsqlSession session) : IGuest
                 Status: ParseStatus(reader.GetString(4)),
                 CreatedAt: reader.GetFieldValue<DateTimeOffset>(5),
                 LikeCount: reader.GetInt64(6),
-                Liked: reader.GetBoolean(7)));
+                Liked: reader.GetBoolean(7),
+                Reactions: reader.GetString(8).Split(',', StringSplitOptions.RemoveEmptyEntries)));
         }
         return entries;
     }

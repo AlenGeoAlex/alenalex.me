@@ -1,5 +1,6 @@
 using AlenAlex.Api.Features.Status.GetStatus;
 using AlenAlex.Api.Features.Status.PollHomelab;
+using AlenAlex.Api.Features.Status.RecordTrack;
 using AlenAlex.Api.Features.Status.Shared;
 using AlenAlex.Api.Infrastructure.Discord;
 using AlenAlex.Api.Infrastructure.Http;
@@ -21,6 +22,10 @@ public static class StatusFeature
             // Don't follow redirects: a login redirect still means the service is up.
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
         services.AddHostedService<HomelabPoller>();
+
+        services.AddSingleton<RecordTrackHandler>();
+        services.AddSingleton<ListeningRecorder>();
+        services.AddHostedService(sp => sp.GetRequiredService<ListeningRecorder>());
 
         // The gateway connection provides presence/Spotify and also handles guestbook moderation.
         services.AddSingleton<DiscordModerationHandler>();

@@ -3,6 +3,7 @@ using AlenAlex.Api.Features.Guestbook.LikeEntry;
 using AlenAlex.Api.Features.Guestbook.ListEntries;
 using AlenAlex.Api.Features.Guestbook.ListPendingEntries;
 using AlenAlex.Api.Features.Guestbook.ModerateEntry;
+using AlenAlex.Api.Features.Guestbook.ReactToEntry;
 using AlenAlex.Api.Features.Guestbook.Shared;
 using AlenAlex.Api.Features.Guestbook.UnlikeEntry;
 using AlenAlex.Api.Infrastructure.Discord;
@@ -20,6 +21,7 @@ public static class GuestbookFeature
         services.AddSingleton<UnlikeEntryHandler>();
         services.AddSingleton<ModerateEntryHandler>();
         services.AddSingleton<ListPendingEntriesHandler>();
+        services.AddSingleton<ReactToEntryHandler>();
 
         // Without a bot token this only logs a warning.
         services.AddSingleton<DiscordModerationNotifier>();

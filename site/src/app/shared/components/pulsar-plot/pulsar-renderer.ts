@@ -40,6 +40,24 @@ function profile(days: ContributionDay[] | null, max: number, samples: number): 
   return ys.map((y) => Math.min(y, 1.25));
 }
 
+/**
+ * Line colour by height: quiet stretches stay bone white, busier days warm through a dim amber
+ * to a muted brick red. Kept dull on purpose so the plot still reads as one quiet object.
+ */
+const RAMP: readonly (readonly [number, number, number])[] = [
+  [0xf2, 0xf0, 0xea], // bone
+  [0xb0, 0x8a, 0x4a], // dim amber
+  [0xa8, 0x48, 0x3a], // muted brick
+];
+
+/** sRGB 0–255 for a profile height (0 = no activity, 1 = the busiest day). */
+function activityRgb(y: number): [number, number, number] {
+  const t = Math.min(1, Math.max(0, (y - 0.04) / 0.96)) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(t));
+  const f = t - i;
+  return [0, 1, 2].map((c) => RAMP[i][c] + (RAMP[i + 1][c] - RAMP[i][c]) * f) as [number, number, number];
+}
+
 /** Canvas 2D fallback for devices without WebGL: same lines, no tilt. */
 function createFlatRenderer(canvas: HTMLCanvasElement, host: HTMLElement): PulsarRenderer {
   const ctx = canvas.getContext('2d')!;
@@ -68,14 +86,26 @@ function createFlatRenderer(canvas: HTMLCanvasElement, host: HTMLElement): Pulsa
       });
       ctx.lineTo(left + side, h); ctx.lineTo(left, h); ctx.closePath();
       ctx.fillStyle = '#0a0a0a'; ctx.fill();
-      ctx.beginPath();
-      ys.forEach((y, s) => {
-        const x = left + (s / 119) * side;
-        s ? ctx.lineTo(x, base - y * amp) : ctx.moveTo(x, base - y * amp);
-      });
-      ctx.strokeStyle = i === hover ? '#e5412f' : hover == null ? 'rgba(242,240,234,0.8)' : 'rgba(242,240,234,0.4)';
       ctx.lineWidth = i === hover ? 2.4 : 1.1;
-      ctx.stroke();
+      if (i === hover) {
+        ctx.beginPath();
+        ys.forEach((y, s) => {
+          const x = left + (s / 119) * side;
+          s ? ctx.lineTo(x, base - y * amp) : ctx.moveTo(x, base - y * amp);
+        });
+        ctx.strokeStyle = '#e5412f';
+        ctx.stroke();
+      } else {
+        const alpha = hover == null ? 0.8 : 0.4;
+        for (let s = 1; s < ys.length; s++) {
+          const [r, g, b] = activityRgb(Math.max(ys[s - 1], ys[s]));
+          ctx.beginPath();
+          ctx.moveTo(left + ((s - 1) / 119) * side, base - ys[s - 1] * amp);
+          ctx.lineTo(left + (s / 119) * side, base - ys[s] * amp);
+          ctx.strokeStyle = `rgba(${r | 0},${g | 0},${b | 0},${alpha})`;
+          ctx.stroke();
+        }
+      }
     }
   };
   const ro = new ResizeObserver(draw);
@@ -116,7 +146,7 @@ async function createWebGlRenderer(canvas: HTMLCanvasElement, host: HTMLElement)
   const SPACING = 0.027;
   const DEPTH = 0.012;
   const AMP = 0.42;
-  const INK = new THREE.Color(0xf2f0ea);
+  const WHITE = new THREE.Color(0xffffff);
   const RED = new THREE.Color(0xe5412f);
 
   const fill = new THREE.MeshBasicMaterial({ color: 0x0a0a0a, side: THREE.DoubleSide });
@@ -142,17 +172,23 @@ async function createWebGlRenderer(canvas: HTMLCanvasElement, host: HTMLElement)
       const baseY = (count / 2 - i) * SPACING;
       const z = -(count - i) * DEPTH;
       const pts: number[] = [];
+      const colors: number[] = [];
+      const c = new THREE.Color();
       const shape = new THREE.Shape();
       shape.moveTo(-WIDTH / 2, baseY - 0.6);
       ys.forEach((y, s) => {
         const x = -WIDTH / 2 + (s / (SAMPLES - 1)) * WIDTH;
         pts.push(x, baseY + y * AMP, z);
+        const [r, g, b] = activityRgb(y);
+        c.setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace);
+        colors.push(c.r, c.g, c.b);
         shape.lineTo(x, baseY + y * AMP);
       });
       shape.lineTo(WIDTH / 2, baseY - 0.6);
       const geo = new LineGeometry();
       geo.setPositions(pts);
-      const mat = new LineMaterial({ color: INK.getHex(), linewidth: 1.25, transparent: true, opacity: 0.86 });
+      geo.setColors(colors);
+      const mat = new LineMaterial({ color: WHITE.getHex(), vertexColors: true, linewidth: 1.25, transparent: true, opacity: 0.86 });
       const line = new Line2(geo, mat);
       const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), fill);
       mesh.position.z = z - 0.001;
@@ -192,7 +228,12 @@ async function createWebGlRenderer(canvas: HTMLCanvasElement, host: HTMLElement)
     lines.forEach((l, i) => {
       const isHover = i === hover;
       const glow = Math.max(0, 1 - Math.abs(i - scan) / 3);
-      l.mat.color.copy(isHover ? RED : INK);
+      // the hovered week is drawn plain red, the rest in their activity colours
+      if (l.mat.vertexColors === isHover) {
+        l.mat.vertexColors = !isHover;
+        l.mat.needsUpdate = true;
+      }
+      l.mat.color.copy(isHover ? RED : WHITE);
       l.mat.linewidth = isHover ? 2.6 : 1.25;
       l.mat.opacity = isHover ? 1 : hover == null ? 0.62 + glow * 0.38 : 0.4;
     });

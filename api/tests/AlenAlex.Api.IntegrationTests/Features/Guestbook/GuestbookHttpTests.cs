@@ -34,7 +34,8 @@ public sealed class GuestbookHttpTests : IAsyncLifetime
         (status, body) = await SendAsync(ada, HttpMethod.Post, "/api/guestbook", new { name = "Ada", message = "hello world" });
         Assert.Equal(HttpStatusCode.Created, status);
         var entry = body!["entry"]!.AsObject();
-        Assert.Equal(["id", "seq", "name", "message", "status", "createdAt", "likeCount", "liked"], entry.Select(p => p.Key));
+        Assert.Equal(["id", "seq", "name", "message", "status", "createdAt", "likeCount", "liked", "reactions"], entry.Select(p => p.Key));
+        AssertEqual("[]", entry["reactions"]);
         Assert.Equal("pending", (string?)entry["status"]);
         Assert.Equal(1, (long)entry["seq"]!);
         Assert.Equal("Ada", (string?)entry["name"]);

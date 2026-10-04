@@ -48,4 +48,8 @@ The 3D icons in `public/objects/` are rendered with three.js by `tools/objects/r
 npm run objects    # open http://localhost:4319/, the PNGs land in public/objects/
 ```
 
-The site uses the `.webp` versions (convert with `cwebp`).
+The guestbook reactions are rendered the same way into `public/objects/reactions/`: open
+http://localhost:4319/?set=reactions instead. The list of reactions is in
+`src/app/core/constants/reactions.constants.ts` (and `GuestbookReactions` in the API).
+
+The site uses the `.webp` versions (convert with `cwebp -q 85`, then delete the PNGs).

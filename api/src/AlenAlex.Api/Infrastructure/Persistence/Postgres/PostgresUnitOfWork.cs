@@ -1,4 +1,5 @@
 using AlenAlex.Api.Features.Guestbook.Shared;
+using AlenAlex.Api.Features.Status.Shared;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -19,9 +20,12 @@ public sealed class PostgresUnitOfWork : IUnitOfWork, INpgsqlSession
     {
         _connection = connection;
         Guestbook = new PostgresGuestbookRepository(this);
+        ListeningHistory = new PostgresListeningHistoryRepository(this);
     }
 
     public IGuestbookRepository Guestbook { get; }
+
+    public IListeningHistoryRepository ListeningHistory { get; }
 
     public async Task BeginAsync(CancellationToken ct = default)
     {
@@ -89,6 +93,12 @@ public static class NpgsqlParameterExtensions
     public static NpgsqlCommand WithText(this NpgsqlCommand command, string name, string? value)
     {
         command.Parameters.Add(name, NpgsqlDbType.Text).Value = (object?)value ?? DBNull.Value;
+        return command;
+    }
+
+    public static NpgsqlCommand WithInt(this NpgsqlCommand command, string name, int value)
+    {
+        command.Parameters.Add(name, NpgsqlDbType.Integer).Value = value;
         return command;
     }
 

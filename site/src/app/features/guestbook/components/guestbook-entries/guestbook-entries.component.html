@@ -13,8 +13,13 @@
     } @else {
       <ol class="m-0 grid list-none p-0">
         @for (entry of shown(); track entry.id) {
-          <li class="grid gap-1 border-t border-rule py-3.5 first:border-t-0 first:pt-1"
-            [class.border-dashed]="entry.status === 'pending'">
+          <li class="group/note relative grid gap-1 border-t border-rule py-3.5 first:border-t-0 first:pt-1"
+            [class.border-dashed]="entry.status === 'pending'"
+            (mouseenter)="hovered.set(entry.id)" (mouseleave)="hovered.set(null)"
+            (focusin)="hovered.set(entry.id)" (focusout)="hovered.set(null)">
+            @if (entry.reactions.length) {
+              <app-reaction-effects [keys]="entry.reactions" [active]="hovered() === entry.id" />
+            }
             <div class="flex flex-wrap items-baseline gap-x-3.5 text-xs text-ink-3">
               <span class="cat text-[0.7rem] tracking-[0.06em] text-ink-2">{{ entry.seq | catalogNo: 'GB' : 4 }}</span>
               <span class="text-ink-2">{{ entry.name }}</span>
@@ -24,6 +29,7 @@
             @if (entry.status === 'pending') {
               <span class="text-xs text-chrome">pending · only you can see this until it's approved</span>
             } @else {
+              <div class="flex items-center justify-between gap-3">
               <button type="button" (click)="guestbook.toggleLike(entry)" [attr.aria-pressed]="entry.liked"
                 [disabled]="guestbook.likesInFlight().has(entry.id)"
                 [attr.aria-label]="(entry.liked ? 'Unlike' : 'Like') + ' note, ' + entry.likeCount + ' likes'"
@@ -34,6 +40,8 @@
                 </svg>
                 {{ entry.likeCount }}
               </button>
+              <app-reaction-badges [keys]="entry.reactions" />
+              </div>
             }
           </li>
         }

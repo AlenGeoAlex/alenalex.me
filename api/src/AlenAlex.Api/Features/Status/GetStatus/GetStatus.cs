@@ -4,7 +4,13 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AlenAlex.Api.Features.Status.GetStatus;
 
-public sealed record GetStatusResponse(DiscordStatus Discord, SpotifyTrack? Spotify, HomelabStatus Homelab, DateTimeOffset FetchedAt);
+/// <param name="RecentTracks">The last few Spotify tracks, newest first (the current one included).</param>
+public sealed record GetStatusResponse(
+    DiscordStatus Discord,
+    SpotifyTrack? Spotify,
+    IReadOnlyList<RecentTrack> RecentTracks,
+    HomelabStatus Homelab,
+    DateTimeOffset FetchedAt);
 
 /// <param name="Activity">Custom status text, or the name of the current non-Spotify activity.</param>
 public sealed record DiscordStatus(PresenceStatus Status, string? Activity);
@@ -16,7 +22,7 @@ public sealed class GetStatusEndpoint : IEndpoint
     public static void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("/api/status", (GetStatusHandler handler) => handler.Handle())
             .WithTags("dashboard")
-            .WithSummary("Discord presence, Spotify now-playing and homelab health");
+            .WithSummary("Discord presence, Spotify now-playing and recently played, and homelab health");
 }
 
 public sealed class GetStatusHandler(LiveStatusStore store, TimeProvider time)
@@ -34,6 +40,6 @@ public sealed class GetStatusHandler(LiveStatusStore store, TimeProvider time)
         var services = store.Homelab;
         var homelab = new HomelabStatus(services.Count(s => s.Up), services.Count, services);
 
-        return TypedResults.Ok(new GetStatusResponse(discord, spotify, homelab, time.GetUtcNow()));
+        return TypedResults.Ok(new GetStatusResponse(discord, spotify, store.RecentTracks, homelab, time.GetUtcNow()));
     }
 }

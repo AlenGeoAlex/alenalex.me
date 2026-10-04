@@ -24,6 +24,7 @@ src/AlenAlex.Api/
       UnlikeEntry/                DELETE /api/guestbook/{id}/likes
       ModerateEntry/              approve / reject (driven by Discord, no HTTP endpoint)
       ListPendingEntries/         /guestbook-pending on Discord
+      ReactToEntry/               Alen's reactions on accepted entries (Discord buttons, /guestbook-react)
       Shared/                     entry model, IGuestbookRepository, error filter, notifier interface
     Github/
       GetSummary/                 GET /api/github
@@ -37,6 +38,7 @@ src/AlenAlex.Api/
     Status/
       GetStatus/                  GET /api/status
       PollHomelab/                background poller (every 60 s)
+      RecordTrack/                saves each new Spotify song from the gateway; keeps the last 5
       Shared/                     live status store + models
   Infrastructure/
     Persistence/                  IUnitOfWork(+Factory), FluentMigrator migrations, DatabaseMigrator
@@ -193,7 +195,7 @@ Responses are JSON with camelCase fields; errors are `{ "error": "..." }`.
 | POST | `/api/guestbook/{id}/likes` | `200 { likeCount, liked: true }`, idempotent; `404 {"error":"entry not found"}` unless accepted |
 | DELETE | `/api/guestbook/{id}/likes` | `200 { likeCount, liked: false }`, idempotent; `404` unless accepted |
 | GET | `/api/github` | Cached summary, refreshed every 15 min; `503 {"error":"warming up"}` until the first fetch |
-| GET | `/api/status` | Discord presence, Spotify track, homelab health |
+| GET | `/api/status` | Discord presence, Spotify track, `recentTracks` (last 5 songs, newest first: `{ track, artist, album, artUrl, playedAt }`), homelab health |
 | GET | `/api/posts/{folder}/revisions?since=` | `{ revisions: [{ sha, shortSha, date, message, url }] }`: commits that changed `index.md`, newest first, max 30, cached 10 min. Commits with `[skip rev]` in the message are left out; `since` (`YYYY-MM-DD`, optional) drops older ones |
 | GET | `/api/posts/{folder}/source?ref=` | `{ ref, meta, markdown }` (raw `.meta` + `index.md`); `ref` defaults to `main` |
 | GET | `/api/posts/{folder}/assets/{file}?ref=` | Raw image bytes (png/jpg/jpeg/gif/webp/svg/avif, max 10 MB). Also series-level assets: `/api/posts/{series}/assets/cover.png` |
@@ -212,8 +214,14 @@ Entry shape:
 ```json
 { "id": "V1StGXR8_Z5jdHi6B-myT", "seq": 42, "name": "Ada", "message": "hello",
   "status": "pending", "createdAt": "2026-10-02T20:17:01.393147+00:00",
-  "likeCount": 0, "liked": false }
+  "likeCount": 0, "liked": false, "reactions": ["heart", "fire"] }
 ```
+
+`reactions` are Alen's, set from Discord: approving an entry swaps the Approve/Reject buttons for
+one toggle button per reaction, and `/guestbook-react id:<entry> [reaction:<pick>]` toggles one
+(or, without `reaction`, replies with the buttons) for entries approved earlier. The list lives in
+`Features/Guestbook/Shared/GuestbookReactions.cs`; to add one, add it there and in the site's
+`core/constants/reactions.constants.ts` with its object in `site/public/objects/reactions/`.
 
 Guestbook validation: `name` 1–40 characters, `message` 3–200 characters, both after trimming,
 counted in Unicode characters (not bytes or UTF-16 units). Errors:

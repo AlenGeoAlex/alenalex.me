@@ -1,10 +1,11 @@
 namespace AlenAlex.Api.Features.Status.Shared;
 
-/// <summary>Written by the Discord gateway and homelab poller. Snapshots are immutable and swapped atomically.</summary>
+/// <summary>Written by the Discord gateway, the listening recorder and the homelab poller. Snapshots are immutable and swapped atomically.</summary>
 public sealed class LiveStatusStore
 {
     private PresenceSnapshot _presence = PresenceSnapshot.Disconnected;
     private IReadOnlyList<ServiceStatus> _homelab = [];
+    private IReadOnlyList<RecentTrack> _recentTracks = [];
 
     public PresenceSnapshot Presence => Volatile.Read(ref _presence);
 
@@ -24,4 +25,9 @@ public sealed class LiveStatusStore
     }
 
     public void SetHomelab(IReadOnlyList<ServiceStatus> services) => Volatile.Write(ref _homelab, services);
+
+    /// <summary>The last few Spotify tracks, newest first. Kept here so /api/status never reads the database.</summary>
+    public IReadOnlyList<RecentTrack> RecentTracks => Volatile.Read(ref _recentTracks);
+
+    public void SetRecentTracks(IReadOnlyList<RecentTrack> tracks) => Volatile.Write(ref _recentTracks, tracks);
 }

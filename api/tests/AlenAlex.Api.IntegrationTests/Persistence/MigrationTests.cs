@@ -10,7 +10,7 @@ public sealed class MigrationTests
     {
         var versions = DatabaseMigrator.All()
             .Select(m => ((FluentMigrator.MigrationAttribute)Attribute.GetCustomAttribute(m.GetType(), typeof(FluentMigrator.MigrationAttribute))!).Version);
-        Assert.Equal([20261004001L], versions);
+        Assert.Equal([20261004001L, 20261005001L], versions);
     }
 
     [Fact]
@@ -18,7 +18,9 @@ public sealed class MigrationTests
     {
         await using var db = TestDatabase.Create();
 
-        Assert.Equal(1L, await db.ScalarAsync("SELECT COUNT(*) FROM \"VersionInfo\""));
+        Assert.Equal(2L, await db.ScalarAsync("SELECT COUNT(*) FROM \"VersionInfo\""));
+        Assert.Equal("c", (await db.ScalarAsync("SELECT confdeltype FROM pg_constraint WHERE conname = 'fk_guestbook_reactions_entry'"))?.ToString());
+        Assert.Equal(1L, await db.ScalarAsync("SELECT COUNT(*) FROM pg_indexes WHERE indexname = 'ix_listening_history_played'"));
         Assert.Equal("bigint",
             await db.ScalarAsync("SELECT data_type FROM information_schema.columns WHERE table_name = 'guestbook_entries' AND column_name = 'seq'"));
         // identity BY DEFAULT ('d'), so imported rows can keep their own seq
@@ -41,7 +43,7 @@ public sealed class MigrationTests
         db.Migrate();
         db.Migrate();
 
-        Assert.Equal(1L, await db.ScalarAsync("SELECT COUNT(*) FROM \"VersionInfo\""));
+        Assert.Equal(2L, await db.ScalarAsync("SELECT COUNT(*) FROM \"VersionInfo\""));
         Assert.Equal(1L, await db.ScalarAsync("SELECT COUNT(*) FROM guestbook_entries"));
     }
 }

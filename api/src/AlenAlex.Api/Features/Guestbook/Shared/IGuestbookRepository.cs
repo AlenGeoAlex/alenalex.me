@@ -40,6 +40,12 @@ public interface IGuestbookRepository
     Task RemoveLikeAsync(string entryId, string ipHash, CancellationToken ct = default);
 
     Task<LikeState> GetLikeStateAsync(string entryId, string ipHash, CancellationToken ct = default);
+
+    /// <summary>Adds the owner's reaction to an entry; adding one twice is ignored.</summary>
+    Task AddReactionAsync(string entryId, string reaction, DateTimeOffset createdAt, CancellationToken ct = default);
+
+    /// <summary>Removes the owner's reaction if present.</summary>
+    Task RemoveReactionAsync(string entryId, string reaction, CancellationToken ct = default);
 }
 
 public sealed record NewGuestbookEntry(string Id, string Name, string Message, string IpHash, DateTimeOffset CreatedAt);

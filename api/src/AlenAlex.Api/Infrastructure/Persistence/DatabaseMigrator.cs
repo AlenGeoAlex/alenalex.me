@@ -27,6 +27,7 @@ public sealed class DatabaseMigrator(string connectionString, string schema, ILo
     public static IMigration[] All() =>
     [
         new M20261004001_InitialSchema(),
+        new M20261005001_ReactionsAndListening(),
     ];
 
     public void MigrateUp()

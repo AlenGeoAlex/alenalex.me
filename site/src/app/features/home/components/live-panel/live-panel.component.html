@@ -18,14 +18,31 @@
 
 <dl class="m-0 grid gap-2">
   @for (row of rows(); track row.key) {
-    <div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3 text-sm xs:grid-cols-[7.5rem_minmax(0,1fr)]">
-      <dt class="flex items-baseline gap-2.5 text-ink-2"><app-signal-mark [hue]="row.hue" [state]="row.state" />{{ row.key }}</dt>
-      <dd class="m-0 min-w-0">
-        <span [class]="row.state === 'on' ? 'text-ink' : 'text-ink-2'">{{ row.value }}</span>
-        @if (row.detail) {
-          <span class="block truncate text-xs text-ink-3">{{ row.detail }}</span>
-        }
-      </dd>
-    </div>
+    @if (row.key === 'listening' && music(); as music) {
+      <!-- hover or focus (a tap on phones) opens the recently played card above the row -->
+      <div class="group/listen relative grid cursor-default grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3 text-sm outline-offset-4 xs:grid-cols-[7.5rem_minmax(0,1fr)]"
+        tabindex="0" aria-describedby="recent-tracks">
+        <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: row }" />
+        <app-recent-tracks id="recent-tracks" role="tooltip" [tracks]="music.recent" [playing]="music.playing"
+          class="invisible absolute bottom-full border border-rule-2 bg-ground-2 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.85)] left-0 z-20 mb-2 w-[min(20rem,calc(100vw-2rem))] translate-y-1 p-4 opacity-0
+                 transition-[opacity,translate,visibility] duration-200 ease-out-expo
+                 group-hover/listen:visible group-hover/listen:translate-y-0 group-hover/listen:opacity-100
+                 group-focus/listen:visible group-focus/listen:translate-y-0 group-focus/listen:opacity-100" />
+      </div>
+    } @else {
+      <div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3 text-sm xs:grid-cols-[7.5rem_minmax(0,1fr)]">
+        <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: row }" />
+      </div>
+    }
   }
 </dl>
+
+<ng-template #rowBody let-row>
+  <dt class="flex items-baseline gap-2.5 text-ink-2"><app-signal-mark [hue]="row.hue" [state]="row.state" />{{ row.key }}</dt>
+  <dd class="m-0 min-w-0">
+    <span [class]="row.state === 'on' ? 'text-ink' : 'text-ink-2'">{{ row.value }}</span>
+    @if (row.detail) {
+      <span class="block truncate text-xs text-ink-3">{{ row.detail }}</span>
+    }
+  </dd>
+</ng-template>

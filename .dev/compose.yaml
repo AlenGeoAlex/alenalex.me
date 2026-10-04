@@ -1,0 +1,22 @@
+name: alenalex-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: alenalex
+      POSTGRES_PASSWORD: alenalex
+      POSTGRES_DB: alenalex
+    ports:
+      - "127.0.0.1:5444:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alenalex -d alenalex"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres:

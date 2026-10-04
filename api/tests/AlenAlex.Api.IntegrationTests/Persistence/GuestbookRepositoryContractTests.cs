@@ -46,7 +46,7 @@ public abstract class GuestbookRepositoryContractTests : IAsyncLifetime
         await uow.CommitAsync(TestContext.Current.CancellationToken);
 
         var entry = await uow.Guestbook.GetByIdAsync("id-1", Alice, TestContext.Current.CancellationToken);
-        Assert.Equal(new GuestbookEntry("id-1", 1, "Ada", "first", GuestbookStatus.PendingApproval, T0, 0, false), entry);
+        Assert.Equivalent(new GuestbookEntry("id-1", 1, "Ada", "first", GuestbookStatus.PendingApproval, T0, 0, false, []), entry, strict: true);
         Assert.Equal(TimeSpan.Zero, entry!.CreatedAt.Offset);
         Assert.Null(await uow.Guestbook.GetByIdAsync("nope", Alice, TestContext.Current.CancellationToken));
     }
@@ -133,6 +133,32 @@ public abstract class GuestbookRepositoryContractTests : IAsyncLifetime
         await uow.Guestbook.RemoveLikeAsync(id, Bob, TestContext.Current.CancellationToken);
         await uow.CommitAsync(TestContext.Current.CancellationToken);
         Assert.Equal(new LikeState(0, false), await uow.Guestbook.GetLikeStateAsync(id, Bob, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Reactions_are_idempotent_and_come_back_oldest_first()
+    {
+        var id = await InsertAsync(Alice, T0, GuestbookStatus.Accepted);
+        var other = await InsertAsync(Bob, T0.AddMinutes(1), GuestbookStatus.Accepted);
+        var ct = TestContext.Current.CancellationToken;
+
+        await using var uow = await Database.CreateAsync(ct);
+        await uow.BeginAsync(ct);
+        await uow.Guestbook.AddReactionAsync(id, "fire", T0.AddMinutes(2), ct);
+        await uow.Guestbook.AddReactionAsync(id, "heart", T0.AddMinutes(1), ct);
+        await uow.Guestbook.AddReactionAsync(id, "heart", T0.AddMinutes(3), ct);
+        await uow.CommitAsync(ct);
+
+        Assert.Equal(["heart", "fire"], (await uow.Guestbook.GetByIdAsync(id, Bob, ct))!.Reactions);
+        var listed = await uow.Guestbook.ListVisibleAsync(Bob, ct);
+        Assert.Equal(["heart", "fire"], listed.Single(e => e.Id == id).Reactions);
+        Assert.Empty(listed.Single(e => e.Id == other).Reactions);
+
+        await uow.BeginAsync(ct);
+        await uow.Guestbook.RemoveReactionAsync(id, "heart", ct);
+        await uow.Guestbook.RemoveReactionAsync(id, "heart", ct);
+        await uow.CommitAsync(ct);
+        Assert.Equal(["fire"], (await uow.Guestbook.GetByIdAsync(id, Bob, ct))!.Reactions);
     }
 
     [Fact]

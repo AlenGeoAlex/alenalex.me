@@ -123,14 +123,252 @@ const OBJECTS = {
   },
 };
 
+// Guestbook reactions, rendered with ?set=reactions into public/objects/reactions.
+// Shown at ~32px, so: bold silhouettes, one or two hues, a gentler turn than the section objects.
+function ink() {
+  return new THREE.MeshPhysicalMaterial({ color: 0x171614, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
+}
+function slab(shape, depth = 0.3, bevel = 0.08) {
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 6, curveSegments: 48 });
+  geo.center();
+  return geo;
+}
+function roundRect(w, h, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+function star4(r, waist = 0.18) {
+  const s = new THREE.Shape();
+  s.moveTo(0, r);
+  for (let i = 1; i <= 4; i++) {
+    const a = Math.PI / 2 + i * Math.PI / 2, m = a - Math.PI / 4;
+    s.quadraticCurveTo(Math.cos(m) * r * waist, Math.sin(m) * r * waist, Math.cos(a) * r, Math.sin(a) * r);
+  }
+  return s;
+}
+// an open hand: palm slab, four fingers and a thumb, in the XY plane
+function hand(hue) {
+  const g = new THREE.Group();
+  g.add(piece(slab(roundRect(0.78, 0.8, 0.2), 0.14, 0.06), hue, 0.0));
+  [-0.27, -0.09, 0.09, 0.27].forEach((x, i) => {
+    const len = [0.42, 0.56, 0.6, 0.5][i];
+    const f = piece(new THREE.CapsuleGeometry(0.085, len, 8, 24), hue, 0.0);
+    f.position.set(x, 0.38 + len / 2, 0);
+    g.add(f);
+  });
+  const thumb = piece(new THREE.CapsuleGeometry(0.095, 0.38, 8, 24), hue, 0.0);
+  thumb.position.set(-0.47, 0.05, 0.02); thumb.rotation.z = 0.7;
+  g.add(thumb);
+  return g;
+}
+const tube = (pts, r, hue) => piece(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 64, r, 16), hue, 0.0);
+
+const REACTIONS = {
+  // a rounded heart
+  heart() {
+    const s = new THREE.Shape();
+    s.moveTo(0, -0.95);
+    s.bezierCurveTo(-0.55, -0.5, -1.05, -0.1, -1.0, 0.35);
+    s.bezierCurveTo(-0.95, 0.95, -0.2, 1.05, 0, 0.55);
+    s.bezierCurveTo(0.2, 1.05, 0.95, 0.95, 1.0, 0.35);
+    s.bezierCurveTo(1.05, -0.1, 0.55, -0.5, 0, -0.95);
+    const g = new THREE.Group();
+    g.add(piece(slab(s, 0.35, 0.16), HUE.red, 0.0));
+    return g;
+  },
+  // a flame with a yellow core
+  fire() {
+    const flame = (k) => {
+      const s = new THREE.Shape();
+      s.moveTo(0, -1 * k);
+      s.bezierCurveTo(0.65 * k, -1 * k, 0.85 * k, -0.4 * k, 0.7 * k, 0.05 * k);
+      s.bezierCurveTo(0.55 * k, 0.45 * k, 0.25 * k, 0.6 * k, 0.1 * k, 1.1 * k);
+      s.bezierCurveTo(-0.15 * k, 0.75 * k, -0.35 * k, 0.6 * k, -0.45 * k, 0.35 * k);
+      s.bezierCurveTo(-0.5 * k, 0.55 * k, -0.6 * k, 0.6 * k, -0.62 * k, 0.6 * k);
+      s.bezierCurveTo(-0.85 * k, 0.2 * k, -0.8 * k, -1 * k, 0, -1 * k);
+      return s;
+    };
+    const g = new THREE.Group();
+    g.add(piece(slab(flame(1), 0.35, 0.12), HUE.red, 0.0));
+    const core = piece(slab(flame(0.52), 0.2, 0.08), HUE.yellow, 0.0);
+    core.position.set(0.0, -0.4, 0.3);
+    g.add(core);
+    return g;
+  },
+  // a face laughing with its eyes shut and mouth open
+  laugh() {
+    const g = new THREE.Group();
+    const face = piece(new THREE.SphereGeometry(1, 64, 32), HUE.yellow, 0.0);
+    face.children[0].material.transmission = 0.45; // a brighter face than the clear acrylic
+    g.add(face);
+    for (const x of [-0.36, 0.36]) {
+      const eye = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.06, 12, 48, Math.PI), ink());
+      eye.position.set(x, 0.28, 0.9);
+      eye.rotation.x = -0.25;
+      g.add(eye);
+    }
+    const m = new THREE.Shape();
+    m.moveTo(-0.46, 0); m.lineTo(0.46, 0); m.absarc(0, 0, 0.46, 0, -Math.PI, true);
+    const mouth = new THREE.Mesh(slab(m, 0.1, 0.04), ink());
+    mouth.position.set(0, -0.12, 0.9); mouth.rotation.x = 0.3;
+    g.add(mouth);
+    for (const x of [-1, 1]) {
+      const tear = piece(new THREE.SphereGeometry(0.12, 32, 16), HUE.cobalt, 0.0);
+      tear.scale.set(1, 1.4, 0.7);
+      tear.position.set(x * 0.66, 0.02, 0.78);
+      g.add(tear);
+    }
+    return g;
+  },
+  // two hands meeting, with sparks
+  clap() {
+    const g = new THREE.Group();
+    const a = hand(HUE.yellow); a.rotation.set(0, 0.5, 0.35); a.position.set(-0.12, 0, -0.2);
+    const b = hand(HUE.yellow); b.scale.x = -1; b.rotation.set(0, -0.5, -0.35); b.position.set(0.2, -0.1, 0.15);
+    g.add(a, b);
+    [[-0.5, 1.55, 0.5], [0.05, 1.7, 0], [0.6, 1.55, -0.5]].forEach(([x, y, rz]) => {
+      const t = piece(new THREE.CapsuleGeometry(0.05, 0.22, 6, 16), HUE.yellow, 0.0);
+      t.position.set(x, y, 0); t.rotation.z = rz;
+      g.add(t);
+    });
+    return g;
+  },
+  // a cup of coffee, steaming
+  coffee() {
+    const pts = [];
+    for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector2(0.48 + 0.14 * t * t, t * 0.95 - 0.5)); }
+    const g = new THREE.Group();
+    g.add(piece(new THREE.LatheGeometry(pts, 96), HUE.white, 0.0));
+    const base = piece(new THREE.CylinderGeometry(0.48, 0.48, 0.04, 96), HUE.white, 0.0); base.position.y = -0.5;
+    const handle = piece(new THREE.TorusGeometry(0.24, 0.06, 16, 48, Math.PI * 1.2), HUE.white, 0.0);
+    handle.position.set(0.58, -0.05, 0); handle.rotation.z = -Math.PI * 0.6;
+    const brew = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.02, 96), acrylic(HUE.red));
+    brew.position.y = 0.36;
+    const saucer = piece(new THREE.CylinderGeometry(0.85, 0.7, 0.07, 96), HUE.white, 0.6); saucer.position.y = -0.56;
+    g.add(base, brew, handle, saucer);
+    [-0.25, 0.05, 0.35].forEach((x, i) => {
+      const h = i === 1 ? 0.75 : 0.6;
+      g.add(tube([[x, 0.55, 0], [x + 0.1, 0.55 + h * 0.33, 0], [x - 0.1, 0.55 + h * 0.66, 0], [x + 0.05, 0.55 + h, 0]], 0.04, HUE.white));
+    });
+    return g;
+  },
+  // a ladybird-ish bug, seen from above
+  bug() {
+    const g = new THREE.Group();
+    const body = piece(new THREE.SphereGeometry(0.75, 64, 32), HUE.red, 0.0);
+    body.scale.set(1, 1.15, 0.6); body.position.y = -0.15;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 48, 24), ink());
+    head.scale.set(1, 0.85, 0.7); head.position.set(0, 0.78, 0);
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.035, 1.6, 0.05), ink());
+    seam.position.set(0, -0.12, 0.44);
+    g.add(body, head, seam);
+    [[-0.3, 0.2], [0.3, 0.2], [-0.35, -0.45], [0.35, -0.45], [0, -0.75]].forEach(([x, y]) => {
+      const spot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 12), ink());
+      spot.scale.set(1, 1, 0.4); spot.position.set(x, y, Math.sqrt(Math.max(0, 1 - (x / 0.75) ** 2 - ((y + 0.15) / 0.86) ** 2)) * 0.45);
+      if (x !== 0) g.add(spot);
+    });
+    for (const sx of [-1, 1]) {
+      [0.35, -0.1, -0.55].forEach((y, i) => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.55, 12), ink());
+        leg.position.set(sx * 0.82, y + (i - 1) * -0.08, -0.05);
+        leg.rotation.z = sx * (Math.PI / 2 + (i - 1) * 0.5);
+        g.add(leg);
+      });
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 12), ink());
+      ant.position.set(sx * 0.2, 1.15, 0); ant.rotation.z = -sx * 0.5;
+      g.add(ant);
+    }
+    return g;
+  },
+  // "100", underlined twice, italic
+  hundred() {
+    const one = new THREE.Shape();
+    one.moveTo(-0.15, -0.6); one.lineTo(0.15, -0.6); one.lineTo(0.15, 0.6); one.lineTo(-0.05, 0.6); one.lineTo(-0.35, 0.38); one.lineTo(-0.25, 0.22); one.lineTo(-0.15, 0.3);
+    one.lineTo(-0.15, -0.6);
+    const zero = (cx) => {
+      const s = new THREE.Shape(); s.absellipse(cx, 0, 0.42, 0.6, 0, Math.PI * 2, false);
+      const h = new THREE.Path(); h.absellipse(cx, 0, 0.18, 0.36, 0, Math.PI * 2, true);
+      s.holes.push(h);
+      return s;
+    };
+    const shapes = [one, zero(0.7), zero(1.7)];
+    const under = [[-0.75, 1.0, 2.35], [-1.0, 0.75, 1.75]];
+    for (const [y, x, w] of under) {
+      const s = new THREE.Shape(), x0 = x - w / 2, r = 0.075;
+      s.moveTo(x0 + r, y - r); s.lineTo(x0 + w - r, y - r); s.absarc(x0 + w - r, y, r, -Math.PI / 2, Math.PI / 2, false);
+      s.lineTo(x0 + r, y + r); s.absarc(x0 + r, y, r, Math.PI / 2, Math.PI * 1.5, false);
+      shapes.push(s);
+    }
+    const geo = new THREE.ExtrudeGeometry(shapes, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 4, curveSegments: 48 });
+    geo.applyMatrix4(new THREE.Matrix4().makeShear(0, 0, 0.22, 0, 0, 0));
+    geo.center();
+    const g = new THREE.Group();
+    g.add(piece(geo, HUE.red, 0.0));
+    return g;
+  },
+  // two palms pressed together, fingers up, seen side-on
+  thanks() {
+    const hand = new THREE.Shape();
+    hand.moveTo(0, -0.95); hand.lineTo(0, 1.1);
+    hand.bezierCurveTo(-0.2, 1.05, -0.42, 0.7, -0.46, 0.25);
+    hand.bezierCurveTo(-0.62, 0.1, -0.66, -0.2, -0.56, -0.45);
+    hand.bezierCurveTo(-0.5, -0.65, -0.42, -0.85, -0.4, -0.95);
+    hand.lineTo(0, -0.95);
+    const g = new THREE.Group();
+    for (const sx of [-1, 1]) {
+      const p = piece(slab(hand, 0.16, 0.05), HUE.yellow, 0.0);
+      p.scale.x = -sx; p.rotation.y = sx * 0.3; p.position.x = sx * 0.35;
+      g.add(p);
+      const cuff = piece(slab(roundRect(0.5, 0.26, 0.1), 0.2, 0.05), HUE.white, 0.0);
+      cuff.position.set(sx * 0.3, -1.1, 0); cuff.rotation.y = sx * 0.3;
+      g.add(cuff);
+      const thumb = piece(new THREE.CapsuleGeometry(0.08, 0.42, 8, 24), HUE.yellow, 0.0);
+      thumb.position.set(sx * 0.11, -0.25, 0.17); thumb.rotation.set(0.2, 0, sx * 0.12);
+      g.add(thumb);
+    }
+    return g;
+  },
+  // two eyes glancing sideways
+  eyes() {
+    const g = new THREE.Group();
+    for (const x of [-0.5, 0.5]) {
+      const ball = piece(new THREE.SphereGeometry(0.46, 64, 32), HUE.white, 0.0);
+      ball.scale.set(1, 1.35, 0.8); ball.position.x = x;
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.2, 48, 24), ink());
+      pupil.scale.set(1, 1.2, 0.35); pupil.position.set(x - 0.17, -0.02, 0.33);
+      g.add(ball, pupil);
+    }
+    return g;
+  },
+  // three four-point stars
+  sparkles() {
+    const g = new THREE.Group();
+    [[0.95, -0.25, -0.2, 0], [0.5, 0.8, 0.75, 0.15], [0.35, 0.95, -0.45, -0.1]].forEach(([r, x, y, z]) => {
+      const s = piece(slab(star4(r), 0.18 * r, 0.06 * r), HUE.yellow, 0.0);
+      s.position.set(x, y, z);
+      g.add(s);
+    });
+    return g;
+  },
+};
+
+// ?set=reactions renders the reactions instead of the section objects
+const SET = new URLSearchParams(location.search).get('set') === 'reactions' ? 'reactions' : '';
+const LIST = SET ? REACTIONS : OBJECTS;
+
 async function render(name) {
   const scene = new THREE.Scene();
   scene.environment = envMap;
   const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4);
   const rim = new THREE.DirectionalLight(0xffffff, 1.4); rim.position.set(-4, 2, -3);
   scene.add(key, rim, new THREE.AmbientLight(0xffffff, 0.25));
-  const obj = OBJECTS[name]();
-  obj.rotation.set(0.42, name === 'index' ? 0.55 : -0.62, 0);
+  const obj = LIST[name]();
+  if (SET) obj.rotation.set(0.22, -0.42, 0);
+  else obj.rotation.set(0.42, name === 'index' ? 0.55 : -0.62, 0);
   scene.add(obj);
   const box = new THREE.Box3().setFromObject(obj);
   const c = box.getCenter(new THREE.Vector3()); obj.position.sub(c);
@@ -142,8 +380,8 @@ async function render(name) {
   const blob = await new Promise((ok) => renderer.domElement.toBlob(ok, 'image/png'));
   const img = new Image(); img.src = URL.createObjectURL(blob); img.width = 160; img.title = name;
   document.body.append(img);
-  await fetch('/save/' + name, { method: 'POST', body: blob });
+  await fetch('/save/' + (SET ? SET + '/' : '') + name, { method: 'POST', body: blob });
 }
-for (const name of Object.keys(OBJECTS)) await render(name);
+for (const name of Object.keys(LIST)) await render(name);
 document.title = 'done';
 </script>

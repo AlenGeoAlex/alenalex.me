@@ -18,9 +18,10 @@ public sealed class GetStatusHttpTests : IAsyncLifetime
         var (status, body) = await GetAsync(_factory.CreateClient(), "/api/status");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(["discord", "spotify", "homelab", "fetchedAt"], body!.AsObject().Select(p => p.Key));
+        Assert.Equal(["discord", "spotify", "recentTracks", "homelab", "fetchedAt"], body!.AsObject().Select(p => p.Key));
         AssertEqual("""{"status":"unknown","activity":null}""", body["discord"]);
         Assert.Null(body["spotify"]);
+        AssertEqual("[]", body["recentTracks"]);
         AssertEqual("""{"up":0,"total":0,"services":[]}""", body["homelab"]);
         Assert.Equal(TimeSpan.Zero, DateTimeOffset.Parse((string)body["fetchedAt"]!).Offset);
     }

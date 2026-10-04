@@ -1,4 +1,5 @@
 using AlenAlex.Api.Features.Guestbook.Shared;
+using AlenAlex.Api.Features.Status.Shared;
 
 namespace AlenAlex.Api.Infrastructure.Persistence;
 
@@ -15,6 +16,8 @@ public interface IUnitOfWorkFactory
 public interface IUnitOfWork : IAsyncDisposable
 {
     IGuestbookRepository Guestbook { get; }
+
+    IListeningHistoryRepository ListeningHistory { get; }
 
     Task BeginAsync(CancellationToken ct = default);
 

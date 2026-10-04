@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { LiveService } from '@core/services/live.service';
 import { ClockService } from '@core/services/clock.service';
 import { SignalHue, SignalMarkComponent, SignalState } from '@shared/components/signal-mark/signal-mark.component';
+import { RecentTracksComponent } from '../recent-tracks/recent-tracks.component';
 
 interface LiveRow {
   key: string;
@@ -14,7 +16,7 @@ interface LiveRow {
 /** Live state: the time in Cork next to yours, presence, music, services, last push. */
 @Component({
   selector: 'app-live-panel',
-  imports: [SignalMarkComponent],
+  imports: [NgTemplateOutlet, SignalMarkComponent, RecentTracksComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './live-panel.component.html',
   host: { class: 'block' },
@@ -22,6 +24,12 @@ interface LiveRow {
 export class LivePanelComponent {
   private readonly live = inject(LiveService);
   protected readonly clock = inject(ClockService);
+
+  /** for the card that opens over the listening row */
+  protected readonly music = computed(() => {
+    const status = this.live.status();
+    return status.state === 'ready' ? { recent: status.data.recentTracks, playing: status.data.spotify } : null;
+  });
 
   protected readonly rows = computed<LiveRow[]>(() => {
     const status = this.live.status();
@@ -39,7 +47,7 @@ export class LivePanelComponent {
       });
       rows.push(spotify
         ? { key: 'listening', hue: 'signal', state: 'on', value: spotify.track, detail: spotify.artist }
-        : { key: 'listening', hue: 'signal', state: 'off', value: 'silence' });
+        : { key: 'listening', hue: 'signal', state: 'off', value: 'not playing anything' });
       rows.push(homelab.total === 0
         ? { key: 'homelab', hue: 'chrome', state: 'unknown', value: 'no services reported' }
         : {

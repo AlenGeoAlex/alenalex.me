@@ -46,7 +46,7 @@ public sealed class SchemaTests
         await using (var command = appDataSource.CreateCommand(
                          "SELECT string_agg(table_name, ',' ORDER BY table_name) FROM information_schema.tables WHERE table_schema = 'guestbook'"))
         {
-            Assert.Equal("VersionInfo,guestbook_entries,guestbook_likes",
+            Assert.Equal("VersionInfo,guestbook_entries,guestbook_likes,guestbook_reactions,listening_history",
                 await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
         }
 

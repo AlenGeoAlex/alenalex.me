@@ -1,8 +1,9 @@
 // Renders the section objects in public/objects.
 //   node tools/objects/serve.mjs, then open http://localhost:4319/
 // render.html draws each object with three.js and POSTs the PNG back to public/objects/<name>.png.
+// http://localhost:4319/?set=reactions renders the guestbook reactions into public/objects/reactions/<name>.png.
 import { createServer } from 'node:http';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,16 +13,21 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 
 createServer(async (req, res) => {
   try {
-    if (req.method === 'POST' && req.url.startsWith('/save/')) {
-      const name = req.url.slice(6).replace(/[^a-z0-9-]/g, '');
+    const url = new URL(req.url, 'http://localhost');
+    if (req.method === 'POST' && url.pathname.startsWith('/save/')) {
+      const [set, name] = url.pathname.startsWith('/save/reactions/')
+        ? ['reactions', url.pathname.slice(16)] : ['', url.pathname.slice(6)];
+      const dir = join(site, 'public', 'objects', set);
+      const file = name.replace(/[^a-z0-9-]/g, '');
       const chunks = [];
       for await (const c of req) chunks.push(c);
-      await writeFile(join(site, 'public', 'objects', `${name}.png`), Buffer.concat(chunks));
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, `${file}.png`), Buffer.concat(chunks));
       res.end('ok');
-      console.log('saved', name);
+      console.log('saved', set ? `${set}/${file}` : file);
       return;
     }
-    const path = req.url === '/' ? join(here, 'render.html')
+    const path = url.pathname === '/' ? join(here, 'render.html')
       : req.url.startsWith('/three/') ? join(site, 'node_modules', 'three', req.url.slice(7))
       : null;
     if (!path) { res.statusCode = 404; return res.end(); }

@@ -9,12 +9,12 @@ export class GuestbookApiService {
 
   async list(): Promise<GuestbookEntry[]> {
     const { entries } = await this.remote.get<{ entries: GuestbookEntry[] }>('/api/guestbook');
-    return entries;
+    return entries.map(withReactions);
   }
 
   async create(name: string, message: string): Promise<GuestbookEntry> {
     const { entry } = await this.remote.post<{ entry: GuestbookEntry }>('/api/guestbook', { name, message });
-    return entry;
+    return withReactions(entry);
   }
 
   like(id: string): Promise<LikeState> {
@@ -25,3 +25,6 @@ export class GuestbookApiService {
     return this.remote.delete<LikeState>(`/api/guestbook/${encodeURIComponent(id)}/likes`);
   }
 }
+
+/** An API from before reactions doesn't send them. */
+const withReactions = (entry: GuestbookEntry): GuestbookEntry => ({ ...entry, reactions: entry.reactions ?? [] });

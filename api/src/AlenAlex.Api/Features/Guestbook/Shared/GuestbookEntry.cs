@@ -9,6 +9,7 @@ public enum GuestbookStatus
 }
 
 /// <summary>An entry as seen by one visitor; <see cref="Liked"/> is relative to that visitor.</summary>
+/// <param name="Reactions">The owner's reactions (keys of <see cref="GuestbookReactions"/>), oldest first.</param>
 public sealed record GuestbookEntry(
     string Id,
     long Seq,
@@ -17,4 +18,5 @@ public sealed record GuestbookEntry(
     GuestbookStatus Status,
     DateTimeOffset CreatedAt,
     long LikeCount,
-    bool Liked);
+    bool Liked,
+    IReadOnlyList<string> Reactions);

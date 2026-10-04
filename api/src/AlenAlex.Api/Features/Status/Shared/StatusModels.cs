@@ -12,7 +12,15 @@ public enum PresenceStatus
     [JsonStringEnumMemberName("unknown")] Unknown,
 }
 
-public sealed record SpotifyTrack(string Track, string Artist, string? Album, string? ArtUrl);
+public sealed record SpotifyTrack(string Track, string Artist, string? Album, string? ArtUrl)
+{
+    /// <summary>Same song (presence updates repeat the current track on every pause, seek and status change).</summary>
+    public bool IsSameSong(SpotifyTrack? other) => other is not null && other.Track == Track && other.Artist == Artist;
+}
+
+/// <summary>A track from the listening history, newest first.</summary>
+/// <param name="PlayedAt">When it started playing.</param>
+public sealed record RecentTrack(string Track, string Artist, string? Album, string? ArtUrl, DateTimeOffset PlayedAt);
 
 /// <param name="LatencyMs"><c>null</c> if the check failed or timed out.</param>
 public sealed record ServiceStatus(string Name, bool Up, long? LatencyMs);

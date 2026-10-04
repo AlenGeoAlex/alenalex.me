@@ -1,3 +1,4 @@
+using AlenAlex.Api.Features.Guestbook.Shared;
 using AlenAlex.Api.Features.Status.Shared;
 using AlenAlex.Api.Infrastructure.Discord;
 using NetCord;
@@ -16,6 +17,50 @@ public sealed class DiscordTests
         Assert.Equal((ModerationMessages.ButtonAction.Reject, "x:y"), (action, id));
         Assert.False(ModerationMessages.TryParseButtonId("gb:delete:abc", out _, out _));
         Assert.False(ModerationMessages.TryParseButtonId("other:approve:abc", out _, out _));
+    }
+
+    [Fact]
+    public void Reaction_buttons_cover_every_reaction_five_per_row()
+    {
+        var rows = ModerationMessages.ReactionRows("abc:1", ["fire"]);
+
+        var buttons = rows.SelectMany(r => r.Components).Cast<NetCord.Rest.ButtonProperties>().ToList();
+        Assert.Equal(GuestbookReactions.All.Count, buttons.Count);
+        Assert.All(rows, r => Assert.InRange(r.Components.Count(), 1, 5));
+        Assert.Equal("gb:react:heart:abc:1", buttons[0].CustomId);
+        Assert.Equal([ButtonStyle.Primary], buttons.Where(b => b.Style == ButtonStyle.Primary).Select(b => b.Style));
+        Assert.Equal("gb:react:fire:abc:1", buttons.Single(b => b.Style == ButtonStyle.Primary).CustomId);
+    }
+
+    [Fact]
+    public void Parses_reaction_button_ids()
+    {
+        Assert.True(ModerationMessages.TryParseReactionButtonId("gb:react:heart:x:y", out var reaction, out var id));
+        Assert.Equal(("heart", "x:y"), (reaction, id));
+        Assert.False(ModerationMessages.TryParseReactionButtonId("gb:react:nope:x", out _, out _));
+        Assert.False(ModerationMessages.TryParseReactionButtonId("gb:react:heart:", out _, out _));
+        Assert.False(ModerationMessages.TryParseReactionButtonId("gb:approve:x", out _, out _));
+        Assert.False(ModerationMessages.TryParseButtonId("gb:react:heart:x", out _, out _));
+    }
+
+    [Fact]
+    public void Reaction_keys_are_unique_lowercase_and_fit_on_one_message()
+    {
+        Assert.Equal(GuestbookReactions.All.Count, GuestbookReactions.All.Select(r => r.Key).Distinct().Count());
+        Assert.All(GuestbookReactions.All, r => Assert.Matches("^[a-z]+$", r.Key));
+        Assert.InRange(GuestbookReactions.All.Count, 1, 25);
+        // in registry order, whatever order they were added in
+        Assert.Equal("❤️ 🔥", ModerationMessages.Describe(["fire", "heart"]));
+        Assert.Equal("none", ModerationMessages.Describe([]));
+    }
+
+    [Fact]
+    public void Same_song_ignores_album_and_art()
+    {
+        var track = new SpotifyTrack("Song", "Artist", "Album", "https://i.scdn.co/image/a");
+        Assert.True(track.IsSameSong(track with { Album = null, ArtUrl = null }));
+        Assert.False(track.IsSameSong(track with { Track = "Other" }));
+        Assert.False(track.IsSameSong(null));
     }
 
     [Fact]

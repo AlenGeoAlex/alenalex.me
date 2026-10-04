@@ -7,6 +7,8 @@ export interface GuestbookEntry {
   createdAt: string;
   likeCount: number;
   liked: boolean;
+  /** Alen's reactions from Discord, oldest first (see core/constants/reactions.constants.ts) */
+  reactions: string[];
 }
 
 export interface LikeState {
