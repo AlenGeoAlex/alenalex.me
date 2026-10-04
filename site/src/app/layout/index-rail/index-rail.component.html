@@ -1,5 +1,5 @@
 <nav aria-label="Catalog index"
-  class="sticky top-0 z-10 flex items-center gap-3 overflow-x-auto px-[clamp(1rem,3vw,2.5rem)] py-2 [scrollbar-width:none]
+  class="sticky top-0 z-10 flex items-center gap-3 overflow-x-auto px-[clamp(1rem,3vw,2.5rem)] py-2 scrollbar-none
          max-md:glass max-md:border-x-0 max-md:border-t-0
          md:row-span-2 md:h-dvh md:flex-col md:items-stretch md:gap-10 md:overflow-visible md:border-r md:border-rule md:px-3 md:py-6">
   <a routerLink="/" aria-label="alenalex.me, home" class="hidden px-2 no-underline md:block">
@@ -10,9 +10,8 @@
       <li>
         <a [routerLink]="section.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: section.path === '/' }"
           ariaCurrentWhenActive="page"
-          class="group grid grid-cols-[28px_auto] items-center gap-x-1.5 border border-transparent py-1 pr-2 pl-1 whitespace-nowrap text-ink-3 no-underline transition-colors
-                 hover:text-ink md:grid-cols-[36px_1fr] md:px-2 md:py-2
-                 [&.active]:border-signal [&.active]:text-ink">
+          class="group grid grid-cols-[28px_auto] items-center gap-x-1.5 border border-transparent py-1 pr-2 pl-1 whitespace-nowrap no-underline transition-colors
+                 hover:text-ink md:grid-cols-[36px_1fr] md:px-2 md:py-2 [&.active]:text-ink">
           <app-section-object [name]="section.object" [size]="36"
             class="row-span-2 w-7! opacity-55 transition-[opacity,transform] duration-300 ease-out-expo group-hover:-translate-y-0.5 group-hover:-rotate-3 group-hover:opacity-100 group-[.active]:opacity-100 md:w-9!" />
           <span class="cat text-[0.72rem] text-ink-2 group-[.active]:text-signal">{{ section.no }}</span>
