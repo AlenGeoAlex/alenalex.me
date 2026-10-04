@@ -2,5 +2,5 @@ title: "This repo is my CMS"
 date: 2026-10-03
 published: false
 tags: ["github", "angular", "cloudflare", "ci-cd"]
-excerpt: "No admin panel, no database, no editor in the browser. Posts are folders in a git repo, and a push is a publish."
+excerpt: "No CMS and no database. The posts are just folders in this repo, and pushing to main publishes them."
 ai-assist: true
