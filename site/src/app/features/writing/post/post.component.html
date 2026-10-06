@@ -1,4 +1,5 @@
-<div class="reader relative -mx-[clamp(1rem,3vw,2.5rem)] min-h-full overflow-hidden bg-(--r-bg) px-[clamp(1rem,3vw,2.5rem)] text-(--r-ink) transition-colors duration-300"
+<!-- overflow-clip, not hidden: it still crops the globe but doesn't break the sticky contents -->
+<div class="reader relative -mx-[clamp(1rem,3vw,2.5rem)] min-h-full overflow-clip bg-(--r-bg) px-[clamp(1rem,3vw,2.5rem)] text-(--r-ink) transition-colors duration-300"
   [attr.data-theme]="reader.theme()">
 
   <app-particle-globe [color]="globeColor()"
@@ -89,16 +90,44 @@
         </div>
       </header>
 
-      <!-- contents on small screens, before the text -->
+      <!-- contents on small screens: a floating island with the current section, tap to jump -->
       @if (post.headings.length > 1) {
-        <details data-pagefind-ignore="all" class="mt-6 border-b border-(--r-rule) pb-4 lg:hidden">
-          <summary class="caps cursor-pointer text-(--r-ink-3)">contents</summary>
-          <ol class="mt-3 mb-0 grid list-none gap-2 p-0 text-sm">
-            @for (heading of post.headings; track heading.id) {
-              <li [class.pl-4]="heading.depth === 3"><a [href]="pageHref() + '#' + heading.id" class="text-(--r-ink-2) no-underline">{{ heading.text }}</a></li>
+        <div data-pagefind-ignore="all" (keydown.escape)="islandOpen.set(false)"
+          class="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex justify-center px-4 lg:hidden">
+          <div class="pointer-events-auto w-full max-w-sm border border-(--r-rule) bg-(--r-glass) shadow-[0_18px_40px_-14px_rgb(0_0_0/0.6)] backdrop-blur-xl">
+            @if (islandOpen()) {
+              <ol id="island-contents" aria-label="On this page"
+                class="m-0 grid max-h-[50vh] list-none gap-0.5 overflow-y-auto overscroll-contain border-b border-(--r-rule) p-2 text-sm">
+                @for (heading of post.headings; track heading.id) {
+                  <li>
+                    <a [href]="pageHref() + '#' + heading.id" (click)="islandOpen.set(false)"
+                      [attr.aria-current]="heading.id === activeId() ? 'location' : null" [class.pl-6]="heading.depth === 3"
+                      class="block px-2.5 py-1.5 text-(--r-ink-2) no-underline aria-[current]:bg-(--r-bg) aria-[current]:text-(--r-ink)
+                             aria-[current]:before:mr-1.5 aria-[current]:before:text-(--r-accent) aria-[current]:before:content-['>']">{{ heading.text }}</a>
+                  </li>
+                }
+              </ol>
             }
-          </ol>
-        </details>
+            <button type="button" (click)="islandOpen.update((open) => !open)"
+              [attr.aria-expanded]="islandOpen()" aria-controls="island-contents"
+              class="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-xs">
+              <svg viewBox="0 0 20 20" aria-hidden="true" class="size-5 shrink-0 -rotate-90">
+                <circle cx="10" cy="10" r="8" fill="none" stroke="var(--r-rule)" stroke-width="2" />
+                <circle cx="10" cy="10" r="8" fill="none" stroke="var(--r-accent)" stroke-width="2" pathLength="100"
+                  [attr.stroke-dasharray]="progress() * 100 + ' 100'" />
+              </svg>
+              <span class="min-w-0 flex-1 truncate text-(--r-ink)">
+                @if (activeHeading()) { <span class="text-(--r-accent)" aria-hidden="true">&gt;</span> }
+                {{ activeHeading()?.text ?? 'contents' }}
+              </span>
+              @if (activeHeading(); as at) {
+                <span class="shrink-0 text-(--r-ink-3)">{{ at.index }}/{{ at.total }}</span>
+              }
+              <svg viewBox="0 0 16 16" aria-hidden="true" class="size-3.5 shrink-0 fill-none stroke-(--r-ink-3) stroke-[1.4] transition-transform duration-200"
+                [class.rotate-180]="islandOpen()"><path d="M4 10l4-4 4 4" /></svg>
+            </button>
+          </div>
+        </div>
       }
 
       <div class="grid grid-cols-1 gap-x-[clamp(2rem,6vw,6rem)] gap-y-10 pt-10" [class]="post.headings.length > 1 || seriesParts().length ? 'lg:grid-cols-[minmax(0,1fr)_17rem] xl:grid-cols-[minmax(0,1fr)_19rem]' : ''">
@@ -110,7 +139,7 @@
         </div>
 
         @if (post.headings.length > 1 || seriesParts().length) {
-        <aside data-pagefind-ignore="all" class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:self-start lg:border-l lg:border-(--r-rule) lg:pl-8">
+        <aside data-pagefind-ignore="all" class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:max-h-[calc(100dvh-4rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:border-(--r-rule) lg:pl-8">
           @if (post.series; as series) {
             <nav aria-label="Parts of this series" class="order-last lg:order-none">
               <p class="caps m-0 text-(--r-ink-3)">the series</p>
@@ -133,11 +162,16 @@
           }
           @if (post.headings.length > 1) {
             <nav aria-label="On this page" class="hidden lg:block">
-              <p class="caps m-0 text-(--r-ink-3)">contents</p>
-              <ol class="mt-3 mb-0 grid list-none gap-2 p-0">
+              <p class="caps m-0 flex justify-between text-(--r-ink-3)">contents <span>{{ (progress() * 100).toFixed(0) }}%</span></p>
+              <!-- a track down the side fills as you read; the section you're in is lit -->
+              <ol class="relative mt-3 mb-0 grid list-none gap-2 p-0 pl-3.5">
+                <span aria-hidden="true" class="absolute inset-y-0 left-0 w-px bg-(--r-rule)"></span>
+                <span aria-hidden="true" class="absolute top-0 left-0 w-px bg-(--r-accent) transition-[height] duration-150" [style.height.%]="progress() * 100"></span>
                 @for (heading of post.headings; track heading.id) {
                   <li [class.pl-4]="heading.depth === 3">
-                    <a [href]="pageHref() + '#' + heading.id" class="text-(--r-ink-2) no-underline hover:text-(--r-ink)">{{ heading.text }}</a>
+                    <a [href]="pageHref() + '#' + heading.id" [attr.aria-current]="heading.id === activeId() ? 'location' : null"
+                      class="block text-(--r-ink-3) no-underline transition-colors duration-200 hover:text-(--r-ink)
+                             aria-[current]:-ml-3.5 aria-[current]:text-(--r-ink) aria-[current]:before:inline-block aria-[current]:before:w-3.5 aria-[current]:before:text-(--r-accent) aria-[current]:before:content-['>']">{{ heading.text }}</a>
                   </li>
                 }
               </ol>

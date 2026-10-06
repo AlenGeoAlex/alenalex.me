@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, inject, input, resource, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, effect, inject, input, resource, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ContentService } from '@core/services/content.service';
@@ -38,6 +38,7 @@ export class PostComponent {
   private readonly seo = inject(SeoService);
   private readonly diagrams = inject(DiagramService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly body = viewChild<ElementRef<HTMLElement>>('body');
   protected readonly reader = inject(ReaderThemeService);
 
@@ -85,6 +86,18 @@ export class PostComponent {
     return `/writing/${this.path()}` + (preview ? `?preview=${encodeURIComponent(preview)}` : '');
   });
 
+  /** the heading being read: the last one scrolled past the top band of the screen */
+  protected readonly activeId = signal<string | null>(null);
+  /** how far through the text, 0–1 */
+  protected readonly progress = signal(0);
+  /** the floating contents island (small screens) is expanded */
+  protected readonly islandOpen = signal(false);
+  protected readonly activeHeading = computed(() => {
+    const headings = this.post.value()?.headings ?? [];
+    const i = headings.findIndex((h) => h.id === this.activeId());
+    return i >= 0 ? { ...headings[i], index: i + 1, total: headings.length } : null;
+  });
+
   protected readonly globeColor = computed(() => (this.reader.theme() === 'light' ? '#171614' : '#f2f0ea'));
 
   /** The post HTML is inserted as-is, so its copy buttons are handled here, by delegation. */
@@ -124,7 +137,39 @@ export class PostComponent {
     });
   }
 
+  /** Where the reader is: which heading is above the reading line, and how much of the text is behind it. */
+  private trackPosition(): void {
+    const line = innerHeight * 0.3;
+    let active: string | null = null;
+    for (const h of this.post.value()?.headings ?? []) {
+      const el = document.getElementById(h.id);
+      if (!el || el.getBoundingClientRect().top > line) break;
+      active = h.id;
+    }
+    this.activeId.set(active);
+    const body = this.body()?.nativeElement.getBoundingClientRect();
+    if (body) this.progress.set(Math.min(1, Math.max(0, (line - body.top) / body.height)));
+  }
+
   constructor() {
+    afterNextRender(() => {
+      let frame = 0;
+      const onScroll = () => (frame ||= requestAnimationFrame(() => ((frame = 0), this.trackPosition())));
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll, { passive: true });
+      this.destroyRef.onDestroy(() => {
+        removeEventListener('scroll', onScroll);
+        removeEventListener('resize', onScroll);
+        cancelAnimationFrame(frame);
+      });
+    });
+    // a new post (or revision) is in the DOM: start over
+    afterRenderEffect(() => {
+      if (!this.post.value()) return;
+      this.islandOpen.set(false);
+      this.trackPosition();
+    });
+
     // runs in the browser only, after the post's HTML is in the DOM
     afterRenderEffect(() => {
       const body = this.body()?.nativeElement;
