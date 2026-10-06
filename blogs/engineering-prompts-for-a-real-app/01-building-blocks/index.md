@@ -6,7 +6,7 @@ Sounds simple, right? It is, until the prompt starts growing.
 To give you an idea of the size: across the app there are now about 740 lines of prompt text, split into 42 blocks with 67 variants between them. One single conversation turn sends the model around 1,700 words of instructions before it has even seen what the user said.
 
 ## Why one big string hurts
-At first a prompt is a few lines in your code. Then you add a rule. Then a rule for one special case. Then an example, because the model keeps getting something wrong. Before you know it you have a wall of text that nobody wants to touch, because changing one line might quietly break something three paragraphs down. And it's not just me. Some researchers looked at **1,262 prompt changes** across 243 projects on GitHub. Only about **1 in 5** changes had a commit message that explained what changed, and most of those just said something like "improve prompt" ([Arxiv (Prompting in the Wild)](https://arxiv.org/abs/2412.17298)). Some changes even added rules that contradicted each other, like asking for a "meaningful length" answer and to "keep it short" in the same prompt. (I felt seen.)
+At first a prompt is a few lines in your code. Then you add a rule. Then a rule for one special case. Then an example, because the model keeps getting something wrong. Before you know it, you have a wall of text that nobody wants to touch, because changing one line might quietly break something three paragraphs down. And it's not just me. Some researchers looked at **1,262 prompt changes** across 243 projects on GitHub. Only about **1 in five** changes had a commit message that explained what changed, and most of those just said something like "improve prompt" ([Arxiv (Prompting in the Wild)](https://arxiv.org/abs/2412.17298)). Some changes even added rules that contradicted each other, like asking for a "meaningful length" answer and to "keep it short" in the same prompt. (I felt seen.)
 
 The scary part is that small changes really matter. In another study, changing *only the formatting* of a prompt (spacing, separators, that kind of thing) shifted one model's score by up to **76 points out of 100** on some tasks ([Arxiv (How I learned to start worrying about prompt formatting)](https://arxiv.org/abs/2310.11324)). So I had a giant block of text that was hard to read, hard to review, easy to break, and impossible to test. That's basically the opposite of how I'd treat any other code.
 
@@ -14,8 +14,8 @@ So I stopped treating prompts as strings and started treating them like code.
 
 ## Blocks, like Lego
 
-Here's the main idea: instead of one big prompt, I build it out of small pieces I call **blocks**. Each block does **one job**. One block says who the AI is. One says how it should talk. One says what to do if someone goes off topic. And so on.
-Then a **builder** snaps them together in order, a bit like Lego, and out comes the final prompt.
+Here's the main idea: instead of one big prompt, I build it out of small pieces I call **blocks**. Each block does **one job**. One block says who the AI is. One says how it should talk. One says what to do if someone goes off the topic. And so on.
+Then a **builder** snaps them together in order, a bit like Lego, and output comes as the final prompt.
 
 ```mermaid
 flowchart LR
@@ -61,8 +61,8 @@ The blocks show up in the prompt in the same order you list them. No magic.
 ### Why this helps
 
 - **Easy to find things.** Want to change how the AI talks? Open `ToneBlock`. You don't have to scroll through 200 lines hoping you found the right paragraph.
-- **Reviews make sense.** When someone changes a block, the code review shows exactly which job changed. "Updated the tone rules" is a lot easier to check than "changed line 147 of the big prompt". (Remember that "1 in 5" number from earlier?)
-- **Reuse for free.** The "stay in character" block is used in more than one prompt. I write it once and plug it in wherever it's needed.
+- **Reviews make sense.** When someone changes a block, the code review shows exactly which job changed. "Updated the tone rules" is a lot easier to check than "changed line 147 of the big prompt". (Remember that "1 in five" number from earlier?)
+- **Reuse for free.** The "stay in character" block is used in more than one prompt. I write it once and plug it in wherever it's necessary.
 - **Room to grow.** Today the app has 42 blocks with 67 variants between them. Writing 67 versions of one giant string would have been a nightmare. With blocks, each variant is just a different block or a different version of one.
 
 ## Switching blocks on and off
@@ -83,7 +83,7 @@ var prompt = await new BookshopPromptBuilder()
 
 The condition is checked every time the prompt is built, so it can change halfway through a chat. Once all the goals are done, the wrap-up block quietly shows up on the next turn.
 
-**2. The block decides, by returning nothing.**
+**2. The block decides by returning nothing.**
 ```csharp
 public class DifficultyBlock : IPromptBlock<BookshopChat>
 {
@@ -120,7 +120,7 @@ The nice side effect: when a block is missing from a prompt, I know exactly wher
 
 This one is niche, but it bit me, so I'll mention it.
 
-The prompt is rebuilt on **every turn**, but the conversation history keeps growing. So if a block switches on or off halfway through a chat, the new instructions can disagree with what the AI has already said.
+The prompt is rebuilt at **every turn**, but the conversation history keeps growing. So if a block switches on or off halfway through a chat, the new instructions can disagree with what the AI has already said.
 
 For example, say the chat starts on "easy" and the bot has been talking slowly with simple words for ten messages. Then the difficulty switches to "hard". The new prompt says "talk at a normal pace", but the history is full of the bot's own slow, simple replies. Now the model has two signals: the new instructions, and its own earlier messages showing it a different way of talking. It doesn't always pick the one you want.
 
@@ -134,7 +134,7 @@ sequenceDiagram
   Note over P,H: new rules vs. old examples → mixed results
 ```
 
-It only happens when something switches **mid-conversation**, and luckily most of my blocks don't. If I ever need one that does... well, that's me engineering something new again. Oh lord. (future me's problem)
+It only happens when something switches **mid-conversation**, and luckily, most of my blocks don't. If I ever need one that does... well, that's me engineering something new again. Oh lord. (future me's problem)
 
 ## Filling in the blanks
 
@@ -217,7 +217,7 @@ flowchart LR
   B --> E["eval suite<br/>(Part 3)"]
 ```
 
-The tests worth writing are about the **switching**, since that's the part with actual logic in it. For example: the wrap-up block should only appear once all the goals are done.
+The tests worth writing are about the **switching**, since that's the part with actual logic in it. For example, the wrap-up block should only appear once all the goals are done.
 
 ```csharp
 [Fact]
@@ -250,13 +250,13 @@ Fair question. I'm not the first person to have this problem, and there are tool
 
 **Prompty** (from Microsoft) also puts a prompt in a file, along with its settings, and it does have C# packages ([Prompty](https://github.com/microsoft/prompty)). It's the closest match to what I wanted. But I'd still have had to build a few things on top of it myself:
 
-- the "block decides if it's needed" logic from earlier, which would move out of C# and into the file's own template language (Jinja2 or Mustache). That's a second language to learn, debug and review, when everything else, even the rules in my eval suite, is plain C#.
-- the trusted vs untrusted handling (Part 2)
+- the "block decides if it's needed" logic from earlier, which would move out of C# and into the file's own template language (Jinja2 or Mustache). That's a second language to learn, debug, and review, when everything else, even the rules in my eval suite, is plain C#.
+- the trusted vs. untrusted handling (Part 2)
 - a clean way for my eval suite to swap one block's text and measure the difference (Part 3)
 
 At that point I'm writing most of it anyway, just around someone else's file format.
 
-**DSPy** (from Stanford) is a different beast. It *is* a prompt engineering framework, but you don't write the prompt yourself. You describe what goes in and what should come out, and DSPy writes the prompt for you. Then, if you give it examples and a way to score answers, its optimisers can keep rewriting that prompt until it scores better ([DSPy](https://dspy.ai/current/)). Its tagline sums it up: *"Program, don't prompt."* It works really well in their papers ([Arxiv DSPy paper](https://arxiv.org/abs/2310.03714)). But it's Python only, it picks the prompt format itself, and tuning runs can cost real money: their own docs say some runs "can spend hundreds of dollars in LM calls".
+**DSPy** (from Stanford) is a different beast. It *is* a prompt engineering framework, but you don't write the prompt yourself. You describe what goes in and what should come out, and DSPy writes the prompt for you. Then, if you give it examples and a way to score answers, its optimizers can keep rewriting that prompt until it scores better ([DSPy](https://dspy.ai/current/)). Its tagline sums it up: *"Program, don't prompt."* It works really well in their papers ([Arxiv DSPy paper](https://arxiv.org/abs/2310.03714)). But it's Python only, it picks the prompt format itself, and tuning runs can cost real money: their own docs say some runs "can spend hundreds of dollars on LM calls".
 
 It's also kind of the opposite of what I wanted. DSPy says "let the machine write the prompt". I wanted "a human writes the prompt, the machine checks it". In a speech therapy app I want to know exactly what the AI is being told, word for word.
 
@@ -303,7 +303,7 @@ Every time the app talks to the AI, it sends everything again: all the instructi
 
 But if the **start** of what you send is exactly the same as something you sent a few minutes ago, the provider can skip re-reading that part and reuse the work it already did. It's a bit like a local shop that knows your usual: say "the usual" and they're already halfway done before you finish talking. On Azure, which is what I use, the first 1,024 tokens (very roughly, 750 words) have to match **exactly**, and even one different character means no reuse ([source](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/prompt-caching)).
 
-And here's my problem. To keep user text from being mistaken for instructions, some of my prompts start with a small note that includes a **random code**, and that code is different on every single request. (Why it has to be random, and why at the top, is a whole story, and that's Part 2.) So for those prompts the very first line is never the same twice, and the cache never kicks in. Not even once.
+And here's my problem. To keep user text from being mistaken for instructions, some of my prompts start with a small note that includes a **random code**, and that code is different on every single request. (Why it has to be random, and why at the top, is a whole story, and that's Part 2.), So for those prompts the very first line is never the same twice, and the cache never kicks in. Not even once.
 
 ```mermaid
 flowchart LR
@@ -330,11 +330,11 @@ So that's the first part. If I had to squeeze it into a few lines:
 - **Keep the changing bits as placeholders**, filled in once at the end.
 - **Make the prompt testable**, using the same blocks in the app and in the tests, so there's never a stale copy.
 
-None of this is fancy. It's mostly treating prompts the way I'd treat any other code. Small pieces, clear names, tests. The funny part is how long it took me to realise prompts deserved that too. (Or, how many times I had to break something before I got the hint.)
+None of this is fancy. It's mostly treating prompts the way I'd treat any other code. Small pieces, clear names, tests. The funny part is how long it took me to realize prompts deserved that too. (Or, how many times I had to break something before I got the hint.)
 
 ### What's next
 
-- **Part 2: Not all text is equal.** Remember that word `Trusted`? Some text in a prompt comes from me, and some comes from the user. If you're not careful, a user can type something that the AI mistakes for instructions. Part 2 covers how I keep those apart, the random tags I wrap user text in, and why I'm honest that it still isn't bulletproof.
+- **Part 2: Not all texts are equal.** Remember that word `Trusted`? Some text in a prompt comes from me, and some comes from the user. If you're not careful, a user can type something that the AI mistakes for instructions. Part 2 covers how I keep those apart, the random tags I wrap user text in, and why I'm honest that it still isn't bulletproof.
 - **Part 3: Testing something that never answers the same way twice.** How I check that the AI actually *behaves* the way the prompt says: running the same case many times, pass rates instead of pass/fail, and using another AI as a judge (without blindly trusting it).
 
-If you've built something similar, or think I've done something silly here, I'd genuinely love to hear it. Drop a note in the guestbook or drop an mail at alen@alenalex.me.
+If you've built something similar or think I've done something silly here, I'd genuinely love to hear it. Drop a note in the guestbook or reach me out at [alen@alenalex.me](mailto:alen@alenalex.me).

@@ -1,6 +1,7 @@
 title: "What I learned engineering prompts for a real app"
 date: 2026-10-05
-published: false
+published: true
+revisions-since: 2026-10-07
 description: "Notes from building the AI side of EaseTalk, a speech therapy app: how I keep prompts tidy and safe, and how I check they still work when the AI never answers the same way twice."
 tags: ["easetalk", "llm", "prompt-engineering", "dotnet", "csharp", "evals"]
 slug: "engineering-prompts-for-a-real-app"

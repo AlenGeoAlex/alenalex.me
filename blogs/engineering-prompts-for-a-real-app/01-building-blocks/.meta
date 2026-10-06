@@ -1,6 +1,7 @@
 title: "Building prompts from blocks, not strings"
 date: 2026-10-05
-published: false
+published: true
+revisions-since: 2026-10-07
 part: 1
 tags: ["easetalk", "llm", "prompt-engineering", "dotnet", "prompt-injection", "testing"]
 excerpt: "One giant prompt string gets scary to touch. Here's how I broke mine into small Lego-like blocks, kept user text from hijacking it. The bonus was I could test it exactly how it would run in production."
