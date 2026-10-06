@@ -82,6 +82,13 @@ public class MetaParsingTests
     }
 
     [Fact]
+    public void References_are_title_and_http_url_pairs()
+    {
+        var ok = Read("title: T\ndate: 2024-01-01\nreferences:\n  - title: \"RFC 9110\"\n    url: https://www.rfc-editor.org/rfc/rfc9110\n");
+        Assert.False(ok.HasErrors, Errors(ok));
+    }
+
+    [Fact]
     public void Revisions_since_is_an_optional_date()
     {
         Assert.Null(Read("title: T\ndate: 2024-01-01\n").Meta!.RevisionsSince);
@@ -102,6 +109,8 @@ public class MetaParsingTests
     [InlineData("title: T\ndate: 2024-01-01\npublished: yes\n", "`published` must be `true` or `false`")]
     [InlineData("title: T\ndate: 2024-01-01\nai-assist: a bit\n", "`ai-assist` must be `true` or `false`")]
     [InlineData("title: T\ndate: 2024-01-01\nrevisions-since: last week\n", "`revisions-since` must be a valid YYYY-MM-DD date")]
+    [InlineData("title: T\ndate: 2024-01-01\nreferences:\n  - title: \"x\"\n    url: ftp://x\n", "`references` entry #1 needs an http(s) `url`")]
+    [InlineData("title: T\ndate: 2024-01-01\nreferences:\n  - url: https://x.dev\n", "`references` entry #1 needs a `title`")]
     [InlineData("title: Part 1: Intro\ndate: 2024-01-01\n", "must be quoted")]
     [InlineData("title: T\ntitle: U\ndate: 2024-01-01\n", "duplicate key `title`")]
     [InlineData("title: \"T\ndate: 2024-01-01\n", "double-quoted scalar")]

@@ -8,7 +8,7 @@ prerendered pages for Azure Static Web Apps.
 ```sh
 npm install
 npm start          # dev server on http://localhost:4200 (builds the blog content first)
-npm run build      # production build into dist/site/browser
+npm run build      # production build into dist/site/browser, plus the search index
 npm run content    # only rebuild the blog content from ../blogs
 ```
 
@@ -25,8 +25,25 @@ markdown (code highlighted with Shiki in light and dark), and writes:
 - `public/content/posts/<path>.json`: one file per post with its HTML
 - `public/feed.xml`: RSS
 
+External links in a post are numbered into a references card at the end of the page (plus any
+`references:` from `.meta`), and code blocks get a copy button.
+
 These are generated and gitignored. Posts, drafts and series pages are prerendered from them, so each
 one has its own `<title>` and Open Graph tags. Set `BLOGS_DIR` to build from another folder.
+
+## Search
+
+Search runs on [Pagefind](https://pagefind.app). After `ng build`, `postbuild` indexes the prerendered
+writing pages into `dist/site/browser/pagefind/`. Only elements marked `data-pagefind-body` are indexed:
+published posts (title, excerpt, text) and series (title, description). Drafts never are. The site
+loads `/pagefind/pagefind.js` the first time someone searches, and our own UI uses it: the
+`$ grep -i` box on /writing (`?q=` in the URL) and the palette on every page (⌘K, Ctrl+K or `/`).
+
+The index only exists in a build, so search says it's unavailable under `npm start`. To try it:
+
+```sh
+npm run search:dev   # build, index, and serve on http://localhost:1414
+```
 
 ## Layout
 

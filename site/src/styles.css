@@ -148,3 +148,15 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* search matches: Pagefind excerpts and highlighted titles */
+@utility search-hit {
+  & mark {
+    background: transparent;
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--color-signal);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+}

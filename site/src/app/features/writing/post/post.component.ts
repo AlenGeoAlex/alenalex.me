@@ -13,6 +13,7 @@ import { ParticleGlobeComponent } from '@shared/components/particle-globe/partic
 import { TagChipComponent } from '@shared/components/tag-chip/tag-chip.component';
 import { AiNoteComponent } from '@shared/components/ai-note/ai-note.component';
 import { RevisionsDialogComponent, RevisionsDialogData } from '../components/revisions-dialog/revisions-dialog.component';
+import { PostReferencesComponent } from '../components/post-references/post-references.component';
 
 /**
  * A post. Published posts are prerendered from the repo at build time.
@@ -21,7 +22,7 @@ import { RevisionsDialogComponent, RevisionsDialogData } from '../components/rev
  */
 @Component({
   selector: 'app-post',
-  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent, AiNoteComponent],
+  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent, AiNoteComponent, PostReferencesComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './post.component.html',
 })
@@ -78,7 +79,39 @@ export class PostComponent {
     return series ? this.content.partsOf(series.slug) : [];
   });
 
+  /** In-page links (contents) keep ?preview, or they'd jump back to the published version. */
+  protected readonly pageHref = computed(() => {
+    const preview = this.preview();
+    return `/writing/${this.path()}` + (preview ? `?preview=${encodeURIComponent(preview)}` : '');
+  });
+
   protected readonly globeColor = computed(() => (this.reader.theme() === 'light' ? '#171614' : '#f2f0ea'));
+
+  /** The post HTML is inserted as-is, so its copy buttons are handled here, by delegation. */
+  protected async onBodyClick(event: MouseEvent): Promise<void> {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button.code-copy');
+    const code = button?.closest('figure.code')?.querySelector('pre code');
+    if (!button || !code) return;
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(code.textContent ?? '');
+      copied = true;
+    } catch {
+      // no clipboard permission (embedded browsers, some privacy settings): select the code and
+      // try the old copy command; if that fails too, the selection is ready for ⌘C
+      getSelection()?.selectAllChildren(code);
+      copied = document.execCommand('copy');
+      if (copied) getSelection()?.removeAllRanges();
+    }
+    button.textContent = copied ? 'copied ✓' : 'press ⌘C';
+    button.setAttribute('aria-label', copied ? 'Copied' : 'Code selected, press Command C or Control C to copy');
+    button.classList.add('is-done');
+    setTimeout(() => {
+      button.textContent = 'copy';
+      button.setAttribute('aria-label', 'Copy code');
+      button.classList.remove('is-done');
+    }, 1600);
+  }
 
   protected openRevisions(title: string): void {
     const folder = this.folder();

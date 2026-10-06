@@ -11,7 +11,9 @@
     "content": "node tools/build-content.mjs",
     "prestart": "node tools/build-content.mjs",
     "prebuild": "node tools/build-content.mjs",
-    "objects": "node tools/objects/serve.mjs"
+    "objects": "node tools/objects/serve.mjs",
+    "postbuild": "pagefind --site dist/site/browser --glob \"writing/**/*.html\"",
+    "search:dev": "npm run build && pagefind --site dist/site/browser --glob \"writing/**/*.html\" --serve"
   },
   "private": true,
   "packageManager": "npm@11.6.2",
@@ -46,6 +48,7 @@
     "@types/three": "^0.186.0",
     "jsdom": "^30.0.0",
     "marked": "^18.0.14",
+    "pagefind": "^1.5.2",
     "postcss": "^8.5.28",
     "prettier": "^3.8.1",
     "shiki": "^4.5.0",

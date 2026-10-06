@@ -1,0 +1,52 @@
+<div class="w-[min(40rem,calc(100vw-2rem))] border border-rule-2 bg-ground-2 shadow-[0_30px_80px_-20px_rgb(0_0_0/0.85)]">
+  <div class="flex items-center gap-3 border-b border-rule px-4 py-3.5">
+    <span class="text-signal" aria-hidden="true">&gt;</span>
+    <input type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
+      role="combobox" aria-label="Search posts and series" aria-controls="search-results" aria-autocomplete="list"
+      [attr.aria-expanded]="ordered().length > 0" [attr.aria-activedescendant]="ordered().length ? 'search-hit-' + active() : null"
+      [value]="query()" (input)="query.set($any($event.target).value)" (keydown)="onKeydown($event)"
+      placeholder="search the catalog"
+      class="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden" />
+    <button type="button" (click)="close()" class="border border-rule px-1.5 text-[0.7rem] text-ink-3 hover:text-ink">esc</button>
+  </div>
+
+  <div class="max-h-[min(60vh,30rem)] overflow-y-auto">
+    @if (!query().trim()) {
+      <p class="m-0 px-4 py-6 text-sm text-ink-3">type to search posts and series by title, description and text.</p>
+    } @else if (search.state() === 'unavailable') {
+      <p class="m-0 px-4 py-6 text-sm text-ink-2">search is built with the site, so it isn't here in dev mode. <span class="text-ink-3">try <code>npm run search:dev</code>.</span></p>
+    } @else if (hits() === null) {
+      <p class="m-0 px-4 py-6 text-sm text-ink-3">searching…</p>
+    } @else if (ordered().length === 0) {
+      <p class="m-0 px-4 py-6 text-sm text-ink-2">no matches for “{{ query().trim() }}”.</p>
+    } @else {
+      <div id="search-results" role="listbox" aria-label="Results">
+        @for (group of groups(); track group.label) {
+          <p class="caps m-0 border-b border-rule px-4 pt-3 pb-1.5" role="presentation">{{ group.label }}</p>
+          @for (hit of group.hits; track hit.path) {
+            @let i = indexOf(hit);
+            <div [id]="'search-hit-' + i" role="option" [attr.aria-selected]="i === active()"
+              (click)="open(hit)" (mousemove)="active.set(i)"
+              class="grid cursor-pointer grid-cols-[4.5rem_minmax(0,1fr)] items-baseline gap-3 border-b border-rule px-4 py-3 last:border-b-0"
+              [class]="i === active() ? 'bg-ground' : ''">
+              <span class="cat text-[0.75rem]" [class]="i === active() ? 'text-signal' : 'text-ink-3'">{{ hit.no }}</span>
+              <span class="grid min-w-0 gap-1">
+                <span class="search-hit truncate font-serif text-lg leading-tight text-ink italic" [innerHTML]="mark(hit.title, query())"></span>
+                @if (hit.series) {
+                  <span class="truncate text-xs text-ink-3">part of {{ hit.series }}</span>
+                }
+                <span class="search-hit line-clamp-2 text-xs text-ink-2" [innerHTML]="hit.excerpt"></span>
+              </span>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <p class="m-0 flex flex-wrap gap-x-4 gap-y-1 border-t border-rule px-4 py-2.5 text-[0.7rem] text-ink-3">
+    <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+    <span><kbd>↵</kbd> open</span>
+    <span><kbd>esc</kbd> close</span>
+  </p>
+</div>

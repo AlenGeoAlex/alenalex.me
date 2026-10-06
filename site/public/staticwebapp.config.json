@@ -4,6 +4,7 @@
     "exclude": [
       "/objects/*",
       "/content/*",
+      "/pagefind/*",
       "/*.{css,js,json,xml,webp,png,svg,ico,woff,woff2,webmanifest}"
     ]
   },
@@ -13,6 +14,10 @@
     }
   },
   "mimeTypes": {
-    ".webmanifest": "application/manifest+json"
+    ".webmanifest": "application/manifest+json",
+    ".pf_fragment": "application/octet-stream",
+    ".pf_index": "application/octet-stream",
+    ".pf_meta": "application/octet-stream",
+    ".pagefind": "application/octet-stream"
   }
 }

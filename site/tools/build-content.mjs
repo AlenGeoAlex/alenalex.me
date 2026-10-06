@@ -18,6 +18,11 @@
 //
 // Parts are ordered by `part:` in their .meta; parts without one come after, by date.
 //
+// References: every external link in a post is numbered in the order it first appears and gets a
+// superscript marker linking to the references card at the end of the page; `references:` in .meta
+// (a list of { title, url }) adds sources that aren't linked in the text. Code blocks get a copy button.
+// Search is built from the prerendered pages by Pagefind (package.json postbuild), not here.
+//
 // Assets: `assets/<file>` (or `./assets/<file>`) is rewritten to the R2 public URL
 //   https://assets.alenalex.me/assets/hotlink-ok/<folder path>/<file>
 // where <folder path> is `<folder>` for posts and `<series>/<part>` for parts (where the generator uploads them).
@@ -87,9 +92,27 @@ function parseMeta(raw, file) {
     aiAssist: typeof meta['ai-assist'] === 'boolean' ? meta['ai-assist'] : null,
     // the revisions list starts at this day (earlier commits are drafting noise)
     revisionsSince: parseOptionalDate(meta['revisions-since'], 'revisions-since', file),
+    extraReferences: parseReferences(meta.references, file),
     part,
   };
 }
+
+/** `references:` in .meta: sources that aren't linked in the text, as `- title: …` / `url: …` pairs. */
+function parseReferences(value, file) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new Error(`blogs/${file} has a bad "references": it must be a list of { title, url }`);
+  return value.map((r, i) => {
+    const title = r && typeof r === 'object' ? String(r.title ?? '').trim() : '';
+    const url = r && typeof r === 'object' ? String(r.url ?? '').trim() : '';
+    if (!title || !/^https?:\/\/\S+$/.test(url)) {
+      throw new Error(`blogs/${file} has a bad "references" entry #${i + 1}: it needs a title and an http(s) url`);
+    }
+    return { title, url };
+  });
+}
+
+/** "github.com" from "https://www.github.com/x". */
+const domainOf = (url) => new URL(url).hostname.replace(/^www\./, '');
 
 function parseSeriesMeta(raw, file) {
   const meta = parseYaml(raw) ?? {};
@@ -113,12 +136,19 @@ function deriveExcerpt(md) {
   return text.length > 180 ? text.slice(0, 177).trimEnd() + '…' : text;
 }
 
-/** Renders one post folder (standalone or part) to its full JSON. `folder` is the path under blogs/. */
-async function renderPost(dir, folder, meta, render) {
+/**
+ * Renders one post folder (standalone or part) to its full JSON. `folder` is the path under blogs/,
+ * `path` the URL path under /writing/ (reference markers link to the card at the end of the page).
+ */
+async function renderPost(dir, folder, path, meta, render) {
   const md = await readFile(join(dir, 'index.md'), 'utf8');
-  const { html, headings } = await render(md, folder);
+  const { html, headings, references } = await render(md, folder, path);
   const words = md.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
-  const { ogImageAsset, ...rest } = meta;
+  const { ogImageAsset, extraReferences, ...rest } = meta;
+  // sources listed in .meta come after the ones linked in the text
+  for (const r of extraReferences) {
+    if (!references.some((x) => x.url === r.url)) references.push({ ...r, domain: domainOf(r.url) });
+  }
   return {
     ...rest,
     folder,
@@ -126,6 +156,7 @@ async function renderPost(dir, folder, meta, render) {
     ogImage: ogImageAsset ? assetUrl(folder, `assets/${ogImageAsset.replace(/^(\.\/)?assets\//, '')}`) : null,
     readingMinutes: Math.max(1, Math.round(words / 220)),
     headings,
+    references,
     html,
   };
 }
@@ -143,16 +174,21 @@ async function main() {
   });
   const loaded = new Set(highlighter.getLoadedLanguages());
 
-  /** Image and link paths are resolved against the post's folder. */
-  async function render(md, folder) {
+  /**
+   * Image and link paths are resolved against the post's folder. External links are numbered in
+   * the order they first appear (a repeated link keeps its number) and become the references card.
+   */
+  async function render(md, folder, path) {
     const headings = [];
+    const references = [];
     const marked = new Marked({
       gfm: true,
       renderer: {
         code({ text, lang }) {
           const language = (lang ?? '').split(/\s/)[0].toLowerCase();
           // drawn in the browser by DiagramService; the source shows as-is until then
-          if (MERMAID_LANGS.has(language)) return `<figure class="diagram"><pre class="mermaid">${escapeXml(text)}</pre></figure>`;
+          // code and diagram sources stay out of search (data-pagefind-ignore): results match the writing
+          if (MERMAID_LANGS.has(language)) return `<figure class="diagram" data-pagefind-ignore="all"><pre class="mermaid">${escapeXml(text)}</pre></figure>`;
           // both themes are emitted as CSS variables; the reader's light/dark toggle picks one
           const html = highlighter.codeToHtml(text, {
             lang: loaded.has(language) ? language : 'text',
@@ -160,7 +196,9 @@ async function main() {
             defaultColor: false,
           });
           const label = language ? `<span class="code-lang">${escapeXml(language)}</span>` : '';
-          return `<figure class="code">${label}${html}</figure>`;
+          // the post page handles clicks on .code-copy (the HTML is inserted, so no Angular bindings)
+          const copy = '<button type="button" class="code-copy" aria-label="Copy code">copy</button>';
+          return `<figure class="code" data-pagefind-ignore="all">${label}${copy}${html}</figure>`;
         },
         image({ href, title, text }) {
           const src = assetUrl(folder, href);
@@ -180,11 +218,20 @@ async function main() {
           const external = /^https?:\/\//.test(href) && !href.startsWith(SITE_URL);
           const t = title ? ` title="${escapeXml(title)}"` : '';
           const rel = external ? ' target="_blank" rel="noopener"' : '';
-          return `<a href="${assetUrl(folder, href)}"${t}${rel}>${text}</a>`;
+          const link = `<a href="${assetUrl(folder, href)}"${t}${rel}>${text}</a>`;
+          if (!external) return link;
+
+          let n = references.findIndex((r) => r.url === href) + 1;
+          if (!n) {
+            const plain = decodeEntities(text.replace(/<[^>]+>/g, '')).trim();
+            references.push({ title: plain && plain !== href ? plain : href.replace(/^https?:\/\//, ''), url: href, domain: domainOf(href) });
+            n = references.length;
+          }
+          return `${link}<sup class="ref-mark"><a href="/writing/${path}#ref-${n}" aria-label="reference ${n}" data-pagefind-ignore>${n}</a></sup>`;
         },
       },
     });
-    return { html: await marked.parse(md), headings };
+    return { html: await marked.parse(md), headings, references };
   }
 
   const all = []; // every post and part, drafts included
@@ -199,7 +246,7 @@ async function main() {
     if (hasMeta) {
       if (!existsSync(join(dir, 'index.md'))) continue;
       const meta = parseMeta(await readFile(join(dir, '.meta'), 'utf8'), `${top}/.meta`);
-      const post = await renderPost(dir, top, meta, render);
+      const post = await renderPost(dir, top, meta.slug, meta, render);
       all.push({ ...post, path: post.slug, draft: !post.published, series: null, partIndex: null, partCount: null });
       continue;
     }
@@ -212,7 +259,7 @@ async function main() {
       if (sub === 'assets' || !existsSync(join(partDir, '.meta')) || !existsSync(join(partDir, 'index.md'))) continue;
       const folder = `${top}/${sub}`;
       const meta = parseMeta(await readFile(join(partDir, '.meta'), 'utf8'), `${folder}/.meta`);
-      parts.push(await renderPost(partDir, folder, meta, render));
+      parts.push(await renderPost(partDir, folder, `${sMeta.slug}/${meta.slug}`, meta, render));
     }
     parts.sort(byPartOrder);
 
@@ -292,7 +339,7 @@ async function main() {
   await mkdir(outDir, { recursive: true });
   await mkdir(join(siteRoot, 'src', 'content'), { recursive: true });
 
-  const summary = ({ html, headings, published: _p, ...rest }) => rest;
+  const summary = ({ html, headings, references: _r, published: _p, ...rest }) => rest;
   const index = published.map(summary).reverse(); // newest first
   await writeFile(join(siteRoot, 'src', 'content', 'posts.json'), JSON.stringify(index, null, 2) + '\n');
   await writeFile(join(siteRoot, 'src', 'content', 'series.json'), JSON.stringify(series, null, 2) + '\n');

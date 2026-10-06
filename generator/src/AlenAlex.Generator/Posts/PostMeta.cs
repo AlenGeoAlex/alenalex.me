@@ -36,6 +36,13 @@ internal sealed record PostMetaResult(
     public bool HasErrors => Meta is null || Diagnostics.Any(d => d.IsError);
 }
 
+/// <summary>One entry of <c>references:</c>, a source that isn't linked in the text.</summary>
+internal sealed class MetaReference
+{
+    public string? Title { get; set; }
+    public string? Url { get; set; }
+}
+
 internal sealed class MetaFields
 {
     public string? Title { get; set; }
@@ -58,6 +65,8 @@ internal sealed class MetaFields
 
     public string? Slug { get; set; }
 
+    public List<MetaReference>? References { get; set; }
+
     [YamlMember(Alias = "revisions-since", ApplyNamingConventions = false)]
     public string? RevisionsSince { get; set; }
 
@@ -77,7 +86,7 @@ internal static class PostMetaReader
 {
     private static readonly HashSet<string> KnownKeys = new(StringComparer.Ordinal)
     {
-        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist", "revisions-since",
+        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist", "revisions-since", "references",
     };
 
     public static PostMetaResult Read(string metaText, string metaPath)
@@ -92,6 +101,7 @@ internal static class PostMetaReader
         var slug = context.Slug(fields.Slug);
         var aiAssist = context.OptionalBool(fields.AiAssist, "ai-assist");
         var revisionsSince = context.OptionalDate(fields.RevisionsSince, "revisions-since");
+        CheckReferences(fields.References, context);
 
         var type = MetaReadContext.NullIfEmpty(fields.Type);
         if (type is not null and not "markdown" and not "html")
@@ -125,5 +135,25 @@ internal static class PostMetaReader
             context.Error("the title slugifies to an empty string; add an explicit `slug:`", "title");
 
         return new PostMetaResult(meta, context.Diagnostics, fields, context.KeyLines);
+    }
+
+    // build-content.mjs fails on the same things
+    private static void CheckReferences(List<MetaReference>? references, MetaReadContext context)
+    {
+        if (references is null) return;
+        for (var i = 0; i < references.Count; i++)
+        {
+            var r = references[i];
+            if (string.IsNullOrWhiteSpace(r?.Title))
+            {
+                context.Error($"`references` entry #{i + 1} needs a `title`", "references");
+            }
+            if (r?.Url is not { } url
+                || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri)
+                || uri.Scheme is not ("http" or "https"))
+            {
+                context.Error($"`references` entry #{i + 1} needs an http(s) `url`", "references");
+            }
+        }
     }
 }

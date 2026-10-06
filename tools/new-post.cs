@@ -480,6 +480,13 @@ static class Help
             New images show up in a local preview only after they're uploaded ([grey]sync[/], or push and let CI do it).
             Use [blue]og_image_asset: cover.png[/] in .meta for the picture shown in link previews.
             """),
+        new("references", "References and links", """
+            Every external link in the text gets a small number after it, and a [bold]references[/] card at the end of the post lists them all, numbered in the order they first appear.
+            For a source you didn't link in the text, add it to .meta:
+              [blue]references:[/]
+              [blue]  - title: "RFC 9110"[/]
+              [blue]    url: https://www.rfc-editor.org/rfc/rfc9110[/]
+            """),
         new("revisions", "What the revisions list shows", """
             The [bold]revisions[/] button on a post lists the commits that changed its [blue]index.md[/]. Commits that only touch .meta or assets/ aren't listed.
               [grey]•[/] Put [blue][[skip rev]][/] anywhere in a commit message to leave that commit out (still on GitHub, just not listed).

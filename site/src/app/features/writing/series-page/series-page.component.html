@@ -1,8 +1,12 @@
-<article class="relative -mx-[clamp(1rem,3vw,2.5rem)] overflow-hidden px-[clamp(1rem,3vw,2.5rem)] pt-[clamp(1.5rem,5vh,3.5rem)] pb-14">
+<!-- search (Pagefind) indexes published series by title and description -->
+<article class="relative -mx-[clamp(1rem,3vw,2.5rem)] overflow-hidden px-[clamp(1rem,3vw,2.5rem)] pt-[clamp(1.5rem,5vh,3.5rem)] pb-14"
+  [attr.data-pagefind-body]="series().draft ? null : ''">
+  <span hidden data-pagefind-meta="kind">series</span>
+  <span hidden data-pagefind-meta="no">{{ series().no | catalogNo: 'SR' }}</span>
   <app-particle-globe class="absolute -top-24 -right-40 size-[min(110vw,42rem)] opacity-60 sm:-right-24 lg:-top-28 lg:right-[4%] lg:opacity-80" />
 
   <header class="relative border-b border-rule pb-10">
-    <p class="cat mt-0 mb-10 text-[0.8rem] text-ink-3">
+    <p class="cat mt-0 mb-10 text-[0.8rem] text-ink-3" data-pagefind-ignore="all">
       <a routerLink="/writing" class="text-ink-2 no-underline hover:text-signal">writing</a>
       <span class="mx-2">/</span>{{ series().no ? (series().no | catalogNo: 'SR') : 'draft series' }}
     </p>
@@ -13,12 +17,12 @@
       </p>
     }
 
-    <p class="caps mt-0 mb-4">a series in {{ parts().length }} part{{ parts().length === 1 ? '' : 's' }}</p>
+    <p class="caps mt-0 mb-4" data-pagefind-ignore="all">a series in {{ parts().length }} part{{ parts().length === 1 ? '' : 's' }}</p>
     <h1 class="m-0 max-w-[18ch] font-serif text-[clamp(2.6rem,7vw,6rem)] leading-[0.98] font-normal tracking-[-0.015em] italic">{{ series().title }}</h1>
     @if (series().description) {
-      <p class="mt-6 mb-0 max-w-[60ch] text-sm text-ink-2">{{ series().description }}</p>
+      <p class="mt-6 mb-0 max-w-[60ch] text-sm text-ink-2" data-pagefind-weight="5">{{ series().description }}</p>
     }
-    <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-ink-3">
+    <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-ink-3" data-pagefind-ignore="all">
       <span>started <time class="text-ink" [attr.datetime]="series().date">{{ series().date }}</time></span>
       @if (series().updated !== series().date) {
         <span>updated <time class="text-ink" [attr.datetime]="series().updated">{{ series().updated }}</time></span>
@@ -35,7 +39,7 @@
       }
     </div>
     @if (parts()[0]; as first) {
-      <a [routerLink]="'/writing/' + first.path"
+      <a [routerLink]="'/writing/' + first.path" data-pagefind-ignore="all"
         class="mt-8 inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-sm font-medium text-ground no-underline transition-colors hover:border-signal hover:bg-signal">
         start reading <span aria-hidden="true">→</span> part 1
       </a>
@@ -47,7 +51,7 @@
   }
 
   @if (parts().length) {
-    <ol class="relative mt-10 mb-0 grid max-w-4xl list-none gap-2 p-0 pl-10" aria-label="Parts">
+    <ol class="relative mt-10 mb-0 grid max-w-4xl list-none gap-2 p-0 pl-10" aria-label="Parts" data-pagefind-ignore="all">
       <span aria-hidden="true" class="absolute top-6 bottom-6 left-[0.7rem] border-l border-dotted border-ink-3"></span>
       @for (part of parts(); track part.path) {
         <li class="relative">

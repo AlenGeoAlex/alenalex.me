@@ -57,10 +57,19 @@ export interface PostHeading {
   text: string;
 }
 
+/** A source of the post: an external link in the text, or one listed under `references:` in .meta. */
+export interface PostReference {
+  title: string;
+  url: string;
+  domain: string;
+}
+
 export interface Post extends PostSummary {
   /** published: false. Readable by URL, never listed. */
   draft?: boolean;
   headings: PostHeading[];
+  /** numbered in the order they first appear; the text's superscript markers point at #ref-<n> */
+  references: PostReference[];
   html: string;
 }
 

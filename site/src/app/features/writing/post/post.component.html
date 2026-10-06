@@ -5,10 +5,17 @@
     class="absolute -top-24 -right-40 size-[min(110vw,46rem)] opacity-70 sm:-right-24 lg:-top-32 lg:right-[4%] lg:opacity-90" />
 
   @if (post.value(); as post) {
-    <article class="relative pt-[clamp(1.5rem,5vh,3.5rem)] pb-14">
+    <!-- search (Pagefind) indexes published posts only: the title, excerpt and text -->
+    <article class="relative pt-[clamp(1.5rem,5vh,3.5rem)] pb-14"
+      [attr.data-pagefind-body]="post.draft || preview() ? null : ''">
+      <span hidden data-pagefind-meta="kind">{{ post.series ? 'part' : 'post' }}</span>
+      <span hidden data-pagefind-meta="no">{{ post.no | catalogNo: 'WR' }}</span>
+      @if (post.series; as series) {
+        <span hidden data-pagefind-meta="series">{{ series.title }}</span>
+      }
 
       <header class="border-b border-(--r-rule) pb-10">
-        <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
+        <div class="mb-10 flex flex-wrap items-center justify-between gap-4" data-pagefind-ignore="all">
           <p class="cat m-0 text-[0.8rem] text-(--r-ink-3)">
             <a routerLink="/writing" class="text-(--r-ink-2) no-underline hover:text-(--r-accent)">writing</a>
             @if (post.series; as series) {
@@ -40,7 +47,7 @@
         </div>
 
         @if (post.draft && !preview()) {
-          <p class="mb-6 inline-flex flex-wrap items-center gap-x-3 gap-y-1 border border-dashed border-(--r-warn) px-3 py-2 text-xs text-(--r-ink-2)">
+          <p class="mb-6 inline-flex flex-wrap items-center gap-x-3 gap-y-1 border border-dashed border-(--r-warn) px-3 py-2 text-xs text-(--r-ink-2)" data-pagefind-ignore="all">
             <span class="text-(--r-warn)">draft</span> not published yet: it's only reachable by this link.
           </p>
         }
@@ -55,7 +62,7 @@
         }
 
         @if (post.series; as series) {
-          <p class="mt-0 mb-4 text-xs tracking-[0.04em] text-(--r-ink-3)">
+          <p class="mt-0 mb-4 text-xs tracking-[0.04em] text-(--r-ink-3)" data-pagefind-ignore="all">
             @if (post.partIndex) {
               <span class="text-(--r-ink)">part {{ post.partIndex }} of {{ post.partCount }}</span> ·
             }
@@ -64,9 +71,9 @@
         }
         <h1 class="m-0 max-w-[18ch] font-serif text-[clamp(2.6rem,7vw,6rem)] leading-[0.98] font-normal tracking-[-0.015em] italic">{{ post.title }}</h1>
         @if (post.excerpt) {
-          <p class="mt-6 mb-0 max-w-[60ch] text-sm text-(--r-ink-2)">{{ post.excerpt }}</p>
+          <p class="mt-6 mb-0 max-w-[60ch] text-sm text-(--r-ink-2)" data-pagefind-weight="5">{{ post.excerpt }}</p>
         }
-        <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-(--r-ink-3)">
+        <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-(--r-ink-3)" data-pagefind-ignore="all">
           <span>filed <time class="text-(--r-ink)" [attr.datetime]="post.date">{{ post.date }}</time></span>
           <span><span class="text-(--r-ink)">{{ post.readingMinutes }} min</span> read</span>
           @if (post.aiAssist !== null) {
@@ -84,21 +91,26 @@
 
       <!-- contents on small screens, before the text -->
       @if (post.headings.length > 1) {
-        <details class="mt-6 border-b border-(--r-rule) pb-4 lg:hidden">
+        <details data-pagefind-ignore="all" class="mt-6 border-b border-(--r-rule) pb-4 lg:hidden">
           <summary class="caps cursor-pointer text-(--r-ink-3)">contents</summary>
           <ol class="mt-3 mb-0 grid list-none gap-2 p-0 text-sm">
             @for (heading of post.headings; track heading.id) {
-              <li [class.pl-4]="heading.depth === 3"><a [href]="'/writing/' + post.path + '#' + heading.id" class="text-(--r-ink-2) no-underline">{{ heading.text }}</a></li>
+              <li [class.pl-4]="heading.depth === 3"><a [href]="pageHref() + '#' + heading.id" class="text-(--r-ink-2) no-underline">{{ heading.text }}</a></li>
             }
           </ol>
         </details>
       }
 
       <div class="grid grid-cols-1 gap-x-[clamp(2rem,6vw,6rem)] gap-y-10 pt-10" [class]="post.headings.length > 1 || seriesParts().length ? 'lg:grid-cols-[minmax(0,1fr)_17rem] xl:grid-cols-[minmax(0,1fr)_19rem]' : ''">
-        <div #body class="prose" [innerHTML]="html()"></div>
+        <div class="min-w-0">
+          <div #body class="prose" [innerHTML]="html()" (click)="onBodyClick($event)"></div>
+          @if (post.references.length) {
+            <app-post-references [references]="post.references" data-pagefind-ignore="all" />
+          }
+        </div>
 
         @if (post.headings.length > 1 || seriesParts().length) {
-        <aside class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:self-start lg:border-l lg:border-(--r-rule) lg:pl-8">
+        <aside data-pagefind-ignore="all" class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:self-start lg:border-l lg:border-(--r-rule) lg:pl-8">
           @if (post.series; as series) {
             <nav aria-label="Parts of this series" class="order-last lg:order-none">
               <p class="caps m-0 text-(--r-ink-3)">the series</p>
@@ -125,7 +137,7 @@
               <ol class="mt-3 mb-0 grid list-none gap-2 p-0">
                 @for (heading of post.headings; track heading.id) {
                   <li [class.pl-4]="heading.depth === 3">
-                    <a [href]="'/writing/' + post.path + '#' + heading.id" class="text-(--r-ink-2) no-underline hover:text-(--r-ink)">{{ heading.text }}</a>
+                    <a [href]="pageHref() + '#' + heading.id" class="text-(--r-ink-2) no-underline hover:text-(--r-ink)">{{ heading.text }}</a>
                   </li>
                 }
               </ol>
@@ -135,7 +147,7 @@
         }
       </div>
 
-      <footer class="mt-16 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4 border-t border-(--r-rule) pt-6">
+      <footer data-pagefind-ignore="all" class="mt-16 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-4 border-t border-(--r-rule) pt-6">
         @if (neighbours().older; as older) {
           <a [routerLink]="'/writing/' + older.path" class="grid gap-1.5 border border-(--r-rule) p-4 no-underline transition-colors hover:border-(--r-ink-3)">
             <span class="cat text-[0.72rem] text-(--r-ink-3)">{{ older.partIndex ? 'part ' + older.partIndex : (older.no | catalogNo: 'WR') }}</span>
