@@ -10,7 +10,7 @@ public sealed class RecordTrackHandler(IUnitOfWorkFactory database)
     public const int Keep = 5;
 
     /// <summary>Saves the track unless it's the newest one already, trims the history, and returns it.</summary>
-    public async Task<IReadOnlyList<RecentTrack>> HandleAsync(SpotifyTrack track, DateTimeOffset playedAt, CancellationToken ct = default)
+    public async Task<IReadOnlyList<RecentTrack>> HandleAsync(ListeningTrack track, DateTimeOffset playedAt, CancellationToken ct = default)
     {
         await using var uow = await database.CreateAsync(ct);
         await uow.BeginAsync(ct);
@@ -44,14 +44,14 @@ public sealed class ListeningRecorder(
     TimeProvider time,
     ILogger<ListeningRecorder> logger) : BackgroundService
 {
-    private readonly Channel<(SpotifyTrack Track, DateTimeOffset PlayedAt)> _queue =
-        Channel.CreateBounded<(SpotifyTrack, DateTimeOffset)>(new BoundedChannelOptions(20)
+    private readonly Channel<(ListeningTrack Track, DateTimeOffset PlayedAt)> _queue =
+        Channel.CreateBounded<(ListeningTrack, DateTimeOffset)>(new BoundedChannelOptions(20)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
             SingleReader = true,
         });
 
-    public void Record(SpotifyTrack track) => _queue.Writer.TryWrite((track, time.GetUtcNow()));
+    public void Record(ListeningTrack track) => _queue.Writer.TryWrite((track, time.GetUtcNow()));
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

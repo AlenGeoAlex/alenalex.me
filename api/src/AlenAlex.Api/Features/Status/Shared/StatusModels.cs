@@ -12,10 +12,10 @@ public enum PresenceStatus
     [JsonStringEnumMemberName("unknown")] Unknown,
 }
 
-public sealed record SpotifyTrack(string Track, string Artist, string? Album, string? ArtUrl)
+public sealed record ListeningTrack(string Track, string Artist, string? Album, string? ArtUrl)
 {
     /// <summary>Same song (presence updates repeat the current track on every pause, seek and status change).</summary>
-    public bool IsSameSong(SpotifyTrack? other) => other is not null && other.Track == Track && other.Artist == Artist;
+    public bool IsSameSong(ListeningTrack? other) => other is not null && other.Track == Track && other.Artist == Artist;
 }
 
 /// <summary>A track from the listening history, newest first.</summary>
@@ -28,7 +28,7 @@ public sealed record ServiceStatus(string Name, bool Up, long? LatencyMs);
 /// <summary>Presence of <c>Discord:UserId</c>.</summary>
 /// <param name="Connected">Whether the gateway is connected; if not, the status is unknown.</param>
 /// <param name="Status"><c>null</c> while connected means Discord sent no presence, i.e. the user is offline.</param>
-public sealed record PresenceSnapshot(bool Connected, PresenceStatus? Status, string? Activity, SpotifyTrack? Spotify)
+public sealed record PresenceSnapshot(bool Connected, PresenceStatus? Status, string? Activity, ListeningTrack? Spotify)
 {
     public static readonly PresenceSnapshot Disconnected = new(false, null, null, null);
 }

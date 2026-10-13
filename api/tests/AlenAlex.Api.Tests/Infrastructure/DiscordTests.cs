@@ -57,7 +57,7 @@ public sealed class DiscordTests
     [Fact]
     public void Same_song_ignores_album_and_art()
     {
-        var track = new SpotifyTrack("Song", "Artist", "Album", "https://i.scdn.co/image/a");
+        var track = new ListeningTrack("Song", "Artist", "Album", "https://i.scdn.co/image/a");
         Assert.True(track.IsSameSong(track with { Album = null, ArtUrl = null }));
         Assert.False(track.IsSameSong(track with { Track = "Other" }));
         Assert.False(track.IsSameSong(null));
@@ -83,7 +83,86 @@ public sealed class DiscordTests
         Assert.True(snapshot.Connected);
         Assert.Equal(PresenceStatus.Dnd, snapshot.Status);
         Assert.Equal("shipping", snapshot.Activity);
-        Assert.Equal(new SpotifyTrack("Song", "Artist", "Album", "https://i.scdn.co/image/abc"), snapshot.Spotify);
+        Assert.Equal(new ListeningTrack("Song", "Artist", "Album", "https://i.scdn.co/image/abc"), snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Maps_presence_with_limusic_and_custom_status()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Online,
+        [
+            new ActivityInfo(UserActivityType.Custom, "Custom Status", null, "coding", null, null),
+            new ActivityInfo(UserActivityType.Listening, "Limusic", "Song", "Artist", null, "mp:external/123/https/i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"),
+        ]);
+
+        Assert.True(snapshot.Connected);
+        Assert.Equal(PresenceStatus.Online, snapshot.Status);
+        Assert.Equal("coding", snapshot.Activity);
+        Assert.Equal(new ListeningTrack("Song", "Artist", null, "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"), snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Maps_presence_with_limusic_googleusercontent_art()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Idle,
+        [
+            new ActivityInfo(UserActivityType.Listening, "Limusic", "Song", "Artist", null, "mp:external/123/https/lh3.googleusercontent.com/xyz"),
+        ]);
+
+        Assert.True(snapshot.Connected);
+        Assert.Equal(PresenceStatus.Idle, snapshot.Status);
+        Assert.Null(snapshot.Activity);
+        Assert.Equal(new ListeningTrack("Song", "Artist", null, "https://lh3.googleusercontent.com/xyz"), snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Ignores_unsupported_music_providers_and_non_listening_activity_types()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Online,
+        [
+            new ActivityInfo(UserActivityType.Listening, "Apple Music", "Song", "Artist", null, null),
+            new ActivityInfo(UserActivityType.Playing, "Spotify", "Song", "Artist", null, null),
+            new ActivityInfo(UserActivityType.Playing, "Limusic", "Song", "Artist", null, null),
+        ]);
+
+        Assert.True(snapshot.Connected);
+        Assert.Null(snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Maps_limusic_with_null_fields_to_empty_strings()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Online,
+        [
+            new ActivityInfo(UserActivityType.Listening, "Limusic", null, null, null, null),
+        ]);
+
+        Assert.Equal(new ListeningTrack("", "", null, null), snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Selects_first_supported_music_activity_when_multiple_present()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Online,
+        [
+            new ActivityInfo(UserActivityType.Listening, "Limusic", "Limusic Song", "Limusic Artist", null, null),
+            new ActivityInfo(UserActivityType.Listening, "Spotify", "Spotify Song", "Spotify Artist", "Album", null),
+        ]);
+
+        Assert.Equal(new ListeningTrack("Limusic Song", "Limusic Artist", null, null), snapshot.Spotify);
+    }
+
+    [Fact]
+    public void Maps_presence_when_non_music_activity_precedes_music_activity()
+    {
+        var snapshot = PresenceMapper.FromParts(UserStatusType.Online,
+        [
+            new ActivityInfo(UserActivityType.Playing, "Rider", null, null, null, null),
+            new ActivityInfo(UserActivityType.Listening, "Limusic", "Song", "Artist", null, null),
+        ]);
+
+        Assert.Equal("Rider", snapshot.Activity);
+        Assert.Equal(new ListeningTrack("Song", "Artist", null, null), snapshot.Spotify);
     }
 
     [Fact]
@@ -97,6 +176,6 @@ public sealed class DiscordTests
 
         Assert.Equal(PresenceStatus.Offline, snapshot.Status);
         Assert.Equal("Rider", snapshot.Activity);
-        Assert.Equal(new SpotifyTrack("Song", "", null, null), snapshot.Spotify);
+        Assert.Equal(new ListeningTrack("Song", "", null, null), snapshot.Spotify);
     }
 }

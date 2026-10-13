@@ -7,7 +7,7 @@ namespace AlenAlex.Api.Features.Status.GetStatus;
 /// <param name="RecentTracks">The last few Spotify tracks, newest first (the current one included).</param>
 public sealed record GetStatusResponse(
     DiscordStatus Discord,
-    SpotifyTrack? Spotify,
+    ListeningTrack? Spotify,
     IReadOnlyList<RecentTrack> RecentTracks,
     HomelabStatus Homelab,
     DateTimeOffset FetchedAt);

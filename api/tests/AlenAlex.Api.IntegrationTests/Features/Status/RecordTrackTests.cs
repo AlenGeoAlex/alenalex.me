@@ -20,7 +20,7 @@ public sealed class RecordTrackTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync() => await _db.DisposeAsync();
 
-    private static SpotifyTrack Song(int n) => new($"Song {n}", "Artist", n % 2 == 0 ? "Album" : null, n % 2 == 0 ? $"https://i.scdn.co/image/{n}" : null);
+    private static ListeningTrack Song(int n) => new($"Song {n}", "Artist", n % 2 == 0 ? "Album" : null, n % 2 == 0 ? $"https://i.scdn.co/image/{n}" : null);
 
     [Fact]
     public async Task Keeps_the_last_five_newest_first()
