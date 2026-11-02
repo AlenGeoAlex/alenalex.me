@@ -276,21 +276,92 @@ There's even a name for this idea. The [12-Factor Agents](https://github.com/hum
 
 It's not perfect, and writing this post actually made me find a couple of things. (Writing about your code is a great way to review it, apparently.)
 
-**1. The builder only builds part of the request.**
-When the app talks to the AI, it doesn't send one prompt. It sends a list of messages: the instructions, then the chat so far, then a few important rules repeated at the end so the AI doesn't forget them halfway through a long chat.
+**1. ~~The builder only builds part of the request.~~** ✅ *Fixed*
+
+~~When the app talks to the AI, it doesn't send one prompt. It sends a list of messages: the instructions, then the chat so far, then a few important rules repeated at the end so the AI doesn't forget them halfway through a long chat.~~
 
 ```mermaid
 flowchart TB
   S["instructions<br/><b>← built by the builder</b>"] --> H["chat history<br/><i>put together by hand</i>"] --> R["rules repeated at the end<br/><i>put together by hand</i>"]
 ```
 
-My builder only makes the first one. The rest is put together by hand, separately in each kind of chat. And guess where the bug was? In one chat type, the rules at the end were added without going through the builder, so their placeholders never got filled in. The AI was literally being told about `{{agent.role}}`. The fix is to let the builder own the whole list of messages, so every part follows the same rules.
+~~My builder only makes the first one. The rest is put together by hand, separately in each kind of chat. And guess where the bug was? In one chat type, the rules at the end were added without going through the builder, so their placeholders never got filled in. The AI was literally being told about `{{agent.role}}`. The fix is to let the builder own the whole list of messages, so every part follows the same rules.~~
 
-**2. My tests only looked at the first message.**
-Which is exactly why bug number 1 slipped through. The prompt tests checked the instructions, but not the rules repeated at the end. Lesson learned: test the whole thing you send, not just the part you built.
+The fix was a small class I call a **request adapter**. The builder still writes the text of each prompt, but the adapter decides the *shape* of the whole call: which messages go in, in what order, and where the chat sits.
 
-**3. One place still keeps its own copy of the block list.**
-I said earlier that tests and app share the same blocks. That's mostly true, but one pipeline still lists its blocks in two places. Small thing, but it's exactly the kind of copy that quietly goes out of date.
+```csharp
+public interface IChatRequestAdapter<in TRequest>
+{
+    Task<IReadOnlyList<ChatMessage>> ToMessagesAsync(
+        TRequest request,
+        IReadOnlyDictionary<string, string>? overrides = null,
+        CancellationToken ct = default);
+}
+```
+
+Say the bookshop bot sends its instructions, then the chat so far, then a short reminder at the end (like "only recommend books we have in stock"). With an adapter, that looks like:
+
+```csharp
+public sealed class BookshopTurnAdapter(
+    BookshopInstructions instructions,
+    BookshopReminders reminders) : IChatRequestAdapter<BookshopTurn>
+{
+    public async Task<IReadOnlyList<ChatMessage>> ToMessagesAsync(
+        BookshopTurn turn, IReadOnlyDictionary<string, string>? overrides = null, CancellationToken ct = default)
+    {
+        var intro    = await instructions.Create().BuildAsync(turn.Chat, overrides, ct);
+        var reminder = await reminders.Create().BuildAsync(turn.Chat, overrides, ct);   // ← through the builder too
+
+        List<ChatMessage> messages = [new(ChatRole.System, intro)];
+        messages.AddRange(turn.History.Select(line => new ChatMessage(
+            line.FromBot ? ChatRole.Assistant : ChatRole.User, line.Text)));
+        messages.Add(new ChatMessage(ChatRole.System, reminder));
+
+        return messages;
+    }
+}
+```
+
+```mermaid
+flowchart TB
+  S["instructions<br/><b>← builder</b>"] --> H["chat history"] --> R["reminder at the end<br/><b>← builder</b>"]
+  A(["request adapter<br/>owns the whole list"]) -.-> S & H & R
+```
+
+Every part of the request now goes through one place, so nothing can sneak past the builder with its blanks still unfilled.
+
+**2. ~~My tests only looked at the first message.~~** ✅ *Fixed*
+
+~~Which is exactly why bug number 1 slipped through. The prompt tests checked the instructions, but not the rules repeated at the end. Lesson learned: test the whole thing you send, not just the part you built.~~
+
+The test now checks **every** instruction message the AI receives, not just the first one. Small change, but it's exactly the one that would have caught the bug.
+
+**3. ~~One place still keeps its own copy of the block list.~~** ✅ *Fixed*
+
+~~I said earlier that tests and app share the same blocks. That's mostly true, but one pipeline still lists its blocks in two places. Small thing, but it's exactly the kind of copy that quietly goes out of date.~~
+
+Each prompt now has a **factory**: the one and only place its blocks are listed.
+
+```csharp
+public sealed class BookshopInstructions : PromptBuilderFactory<BookshopChat>
+{
+    public override IPromptBuilder<BookshopChat> Create() =>
+        new BookshopPromptBuilder()
+            .With(new GreetingBlock())
+            .With(new ToneBlock())
+            .With(new OpeningHoursBlock())
+            .WithIf(chat => chat.AskedForIdeas, new RecommendationsBlock());
+}
+```
+
+The app, the unit tests and the evals all call `Create()` on the same factory, so there's no second copy left to go out of date.
+
+```mermaid
+flowchart LR
+  F["factory<br/>(one block list)"] --> A["the app"]
+  F --> T["unit tests"]
+  F --> E["evals"]
+```
 
 **4. I can't tell which prompt produced which answer.**
 If an AI reply looks weird in the logs, I'd love to see the exact prompt version behind it. A small fingerprint of the final prompt stored next to each AI call would sort that out.
