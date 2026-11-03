@@ -10,6 +10,17 @@ public class SeriesMetaTests
     private static SeriesMetaResult Read(string text) => SeriesMetaReader.Read(text, "/blogs/s/series.meta");
 
     [Fact]
+    public void Revisions_since_is_an_optional_date_for_the_parts()
+    {
+        var ok = Read("title: S\ndate: 2025-01-10\nrevisions-since: 2025-02-01\n");
+        Assert.Empty(ok.Diagnostics);
+        Assert.Equal(new DateOnly(2025, 2, 1), ok.Meta!.RevisionsSince);
+
+        var bad = Read("title: S\ndate: 2025-01-10\nrevisions-since: soon\n");
+        Assert.Contains(bad.Diagnostics, d => d.IsError && d.Message.Contains("`revisions-since` must be a valid YYYY-MM-DD date"));
+    }
+
+    [Fact]
     public void Parses_all_fields()
     {
         var result = Read("""

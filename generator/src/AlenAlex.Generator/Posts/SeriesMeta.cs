@@ -11,7 +11,8 @@ internal sealed record SeriesMeta(
     string? Description,
     IReadOnlyList<string> Tags,
     string? Slug,
-    string? CoverAsset)
+    string? CoverAsset,
+    DateOnly? RevisionsSince = null)
 {
     public string EffectiveSlug => Slug ?? Slugifier.Slugify(Title);
 }
@@ -33,13 +34,17 @@ internal sealed class SeriesMetaFields
 
     [YamlMember(Alias = "cover_asset", ApplyNamingConventions = false)]
     public string? CoverAsset { get; set; }
+
+    /// <summary>The default <c>revisions-since:</c> for the series' parts (a part's own wins).</summary>
+    [YamlMember(Alias = "revisions-since", ApplyNamingConventions = false)]
+    public string? RevisionsSince { get; set; }
 }
 
 internal static class SeriesMetaReader
 {
     private static readonly HashSet<string> KnownKeys = new(StringComparer.Ordinal)
     {
-        "title", "date", "published", "description", "tags", "slug", "cover_asset",
+        "title", "date", "published", "description", "tags", "slug", "cover_asset", "revisions-since",
     };
 
     public static SeriesMetaResult Read(string text, string path)
@@ -52,6 +57,7 @@ internal static class SeriesMetaReader
         var published = context.Published(fields.Published);
         var tags = context.Tags(fields.Tags);
         var slug = context.Slug(fields.Slug);
+        var revisionsSince = context.OptionalDate(fields.RevisionsSince, "revisions-since");
 
         var meta = title is not null && date is not null
             ? new SeriesMeta(
@@ -61,7 +67,8 @@ internal static class SeriesMetaReader
                 MetaReadContext.NullIfEmpty(fields.Description),
                 tags,
                 slug,
-                MetaReadContext.NullIfEmpty(fields.CoverAsset))
+                MetaReadContext.NullIfEmpty(fields.CoverAsset),
+                revisionsSince)
             : null;
 
         if (meta is { Slug: null } && meta.EffectiveSlug.Length == 0)

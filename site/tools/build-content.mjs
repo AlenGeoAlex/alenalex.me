@@ -167,6 +167,8 @@ function parseSeriesMeta(raw, file) {
     ...parseCommon(meta, file),
     description: meta.description ? String(meta.description) : null,
     coverAsset: meta.cover_asset ? String(meta.cover_asset) : null,
+    // the default for its parts; a part's own revisions-since wins
+    revisionsSince: parseOptionalDate(meta['revisions-since'], 'revisions-since', file),
   };
 }
 
@@ -340,6 +342,7 @@ async function main() {
       const index = visible.indexOf(p);
       all.push({
         ...p,
+        revisionsSince: p.revisionsSince ?? sMeta.revisionsSince,
         path: `${sMeta.slug}/${p.slug}`,
         draft,
         series: ref,

@@ -117,6 +117,7 @@ description: Rebuilding the guestbook API in Rust, one piece at a time.
 tags: ["rust", "axum"]
 slug: guestbook-rewrite           # optional; default is the slugified title
 cover_asset: cover.png            # optional; must exist in the series' own assets/
+revisions-since: 2025-01-20       # optional; the default for its parts (a part's own wins)
 ```
 
 A part's `.meta` takes every usual post key plus an optional `part:`:

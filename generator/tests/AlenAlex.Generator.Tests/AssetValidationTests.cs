@@ -53,6 +53,25 @@ public class AssetReferenceScannerTests
     }
 
     [Fact]
+    public void Ignores_html_comments_like_the_new_post_notes()
+    {
+        const string markdown = """
+            <!--
+              Images:   put them in assets/ next to this file and write ![alt text](assets/<file>)
+            -->
+
+            <!-- ![old](assets/old.png) --> ![kept](assets/kept.png)
+
+            ![real](assets/real.png)
+            """;
+
+        var refs = AssetReferenceScanner.Scan(markdown);
+
+        Assert.Equal(["kept.png", "real.png"], refs.Select(r => r.RelativePath));
+        Assert.Equal([5, 7], refs.Select(r => r.Line));
+    }
+
+    [Fact]
     public void Strips_query_and_fragment()
     {
         var refs = AssetReferenceScanner.Scan("![x](assets/a.png?v=2) [y](./assets/b.pdf#page=3)");

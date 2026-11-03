@@ -9,7 +9,8 @@ internal sealed record AssetReference(string RelativePath, string Raw, int Line)
 
 /// <summary>
 /// Finds <c>assets/x</c> and <c>./assets/x</c> in markdown images, inline links and reference definitions,
-/// the same targets <c>assetUrl()</c> in build-content.mjs rewrites. Code blocks and spans are ignored.
+/// the same targets <c>assetUrl()</c> in build-content.mjs rewrites. Code blocks, code spans and HTML
+/// comments (like the notes new-post.cs puts at the top of index.md) are ignored: none of them render.
 /// </summary>
 internal static partial class AssetReferenceScanner
 {
@@ -18,10 +19,30 @@ internal static partial class AssetReferenceScanner
         var results = new List<AssetReference>();
         var lines = markdown.ReplaceLineEndings("\n").Split('\n');
         string? openFence = null;
+        var inComment = false;
 
         for (var i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
+
+            if (openFence is null)
+            {
+                if (inComment)
+                {
+                    var end = line.IndexOf("-->", StringComparison.Ordinal);
+                    if (end < 0) continue;
+                    line = line[(end + 3)..];
+                    inComment = false;
+                }
+
+                line = HtmlComment().Replace(line, string.Empty);
+                var open = line.IndexOf("<!--", StringComparison.Ordinal);
+                if (open >= 0)
+                {
+                    line = line[..open];
+                    inComment = true;
+                }
+            }
 
             var fence = FenceStart().Match(line);
             if (openFence is null && fence.Success)
@@ -95,4 +116,7 @@ internal static partial class AssetReferenceScanner
 
     [GeneratedRegex(@"^(\./)?assets/")]
     private static partial Regex OgImagePrefix();
+
+    [GeneratedRegex("<!--.*?-->")]
+    private static partial Regex HtmlComment();
 }
