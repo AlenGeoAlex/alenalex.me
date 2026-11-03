@@ -119,8 +119,17 @@
 .prose .figure { margin-inline: 0; }
 .prose .figure img { max-height: 34rem; width: auto; max-width: 100%; border: 1px solid var(--r-rule); background: var(--r-code); }
 .prose figcaption { margin-top: 0.6rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--r-ink-3); }
-.prose table { border-collapse: collapse; font-family: var(--font-mono); font-size: 0.85rem; display: block; overflow-x: auto; }
-.prose th, .prose td { border-bottom: 1px solid var(--r-rule); padding: 0.5rem 1rem 0.5rem 0; text-align: left; }
+.prose .table-scroll { overflow-x: auto; }
+.prose table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.85rem; }
+.prose th, .prose td { border-bottom: 1px solid var(--r-rule); padding: 0.5rem 1rem; text-align: left; font-variant-numeric: tabular-nums; }
+/* hairlines between columns, none on the outer edges */
+.prose th + th, .prose td + td { border-left: 1px solid var(--r-rule); }
+.prose th:first-child, .prose td:first-child { padding-left: 0; }
+.prose th:last-child, .prose td:last-child { padding-right: 0; }
+/* :--- / :--: / ---: in the markdown */
+.prose th[align='right'], .prose td[align='right'] { text-align: right; white-space: nowrap; }
+.prose th[align='center'], .prose td[align='center'] { text-align: center; white-space: nowrap; }
+.prose th { font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--r-ink-3); border-bottom-color: var(--r-ink-3); }
 
 @media (max-width: 34rem) {
   .prose { font-size: 1.15rem; }

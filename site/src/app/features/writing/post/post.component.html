@@ -130,7 +130,7 @@
         </div>
       }
 
-      <div class="grid grid-cols-1 gap-x-[clamp(2rem,6vw,6rem)] gap-y-10 pt-10" [class]="post.headings.length > 1 || seriesParts().length ? 'lg:grid-cols-[minmax(0,1fr)_17rem] xl:grid-cols-[minmax(0,1fr)_19rem]' : ''">
+      <div class="grid grid-cols-1 gap-x-[clamp(2rem,6vw,6rem)] gap-y-10 pt-10" [class]="hasAside() ? 'lg:grid-cols-[minmax(0,1fr)_17rem] xl:grid-cols-[minmax(0,1fr)_19rem]' : ''">
         <div class="min-w-0">
           <div #body class="prose" [innerHTML]="html()" (click)="onBodyClick($event)"></div>
           @if (post.references.length) {
@@ -138,8 +138,10 @@
           }
         </div>
 
-        @if (post.headings.length > 1 || seriesParts().length) {
-        <aside data-pagefind-ignore="all" class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:max-h-[calc(100dvh-4rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:border-(--r-rule) lg:pl-8">
+        @if (hasAside()) {
+        <!-- the column carries the divider, so it runs the full length of the post; the aside inside sticks -->
+        <div class="lg:border-l lg:border-(--r-rule) lg:pl-8">
+        <aside data-pagefind-ignore="all" class="grid content-start gap-8 text-xs lg:sticky lg:top-8 lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto">
           @if (post.series; as series) {
             <nav aria-label="Parts of this series" class="order-last lg:order-none">
               <p class="caps m-0 text-(--r-ink-3)">the series</p>
@@ -177,7 +179,11 @@
               </ol>
             </nav>
           }
+          @if (post.files.length) {
+            <app-post-files [files]="post.files" />
+          }
         </aside>
+        </div>
         }
       </div>
 

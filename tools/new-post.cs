@@ -487,6 +487,12 @@ static class Help
               [blue]  - title: "RFC 9110"[/]
               [blue]    url: https://www.rfc-editor.org/rfc/rfc9110[/]
             """),
+        new("files", "Downloads", """
+            List downloads under [blue]files:[/] in .meta and they show in a [bold]files[/] card at the end of the post.
+              [grey]•[/] Small files (up to ~25 MB) go in [blue]assets/[/]: [blue]- file: results.zip[/] + [blue]title:[/]. Size and SHA-256 are worked out at build time, and the download button checks the hash in the browser before saving.
+              [grey]•[/] Big ones (codebases, datasets) go in a [bold]GitHub Release[/], not git: [blue]- url: https://github.com/…/releases/download/…[/] + [blue]title:[/] + [blue]sha256:[/] ([grey]shasum -a 256 <file>[/]).
+              [grey]•[/] Over 25 MB in assets/ is a warning, over 100 MB an error (GitHub's limit).
+            """),
         new("revisions", "What the revisions list shows", """
             The [bold]revisions[/] button on a post lists the commits that changed its [blue]index.md[/]. Commits that only touch .meta or assets/ aren't listed.
               [grey]•[/] Put [blue][[skip rev]][/] anywhere in a commit message to leave that commit out (still on GitHub, just not listed).

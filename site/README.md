@@ -28,6 +28,17 @@ markdown (code highlighted with Shiki in light and dark), and writes:
 External links in a post are numbered into a references card at the end of the page (plus any
 `references:` from `.meta`), and code blocks get a copy button.
 
+Downloads listed under `files:` in `.meta` get a files card. Files in `assets/` are hashed (SHA-256) at
+build time, and the download button fetches the file from R2, hashes it in the browser and only saves it
+if it matches. That needs CORS on the R2 bucket (Cloudflare dashboard → R2 → bucket → Settings → CORS):
+
+```json
+[{ "AllowedOrigins": ["https://alenalex.me", "http://localhost:4200"], "AllowedMethods": ["GET", "HEAD"], "AllowedHeaders": ["*"], "MaxAgeSeconds": 86400 }]
+```
+
+Without it the button falls back to direct links plus the hash to check by hand. Big files belong in a
+GitHub Release (`url:` + `sha256:`), shown as a plain link.
+
 These are generated and gitignored. Posts, drafts and series pages are prerendered from them, so each
 one has its own `<title>` and Open Graph tags. Set `BLOGS_DIR` to build from another folder.
 

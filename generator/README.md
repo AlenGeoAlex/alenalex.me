@@ -50,6 +50,8 @@ For every folder with a `.meta` (drafts included, shown as `draft`):
 | every `assets/x` / `./assets/x` in markdown images, inline links and reference definitions exists in `assets/` (exact case: R2 and Linux are case-sensitive; code blocks are ignored) | error |
 | `og_image_asset`, if set, exists in `assets/` | error |
 | `references`, if set, is a list of `{ title, url }` with an http(s) url | error |
+| `files`: each has a `title` and exactly one of `file` (must exist in `assets/`) or `url` (https, with a 64-hex `sha256`) | error |
+| a `files` asset over 25 MB (warning: use a GitHub Release) / over 100 MB (error: GitHub's limit) | warning / error |
 | slugs (`slug:` or the slugified title) are unique across **published** posts | error |
 | unknown `.meta` keys; files in `assets/` that nothing references | warning |
 

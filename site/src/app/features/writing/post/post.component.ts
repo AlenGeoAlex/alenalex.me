@@ -14,6 +14,7 @@ import { TagChipComponent } from '@shared/components/tag-chip/tag-chip.component
 import { AiNoteComponent } from '@shared/components/ai-note/ai-note.component';
 import { RevisionsDialogComponent, RevisionsDialogData } from '../components/revisions-dialog/revisions-dialog.component';
 import { PostReferencesComponent } from '../components/post-references/post-references.component';
+import { PostFilesComponent } from '../components/post-files/post-files.component';
 
 /**
  * A post. Published posts are prerendered from the repo at build time.
@@ -22,7 +23,7 @@ import { PostReferencesComponent } from '../components/post-references/post-refe
  */
 @Component({
   selector: 'app-post',
-  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent, AiNoteComponent, PostReferencesComponent],
+  imports: [RouterLink, CatalogNoPipe, ParticleGlobeComponent, TagChipComponent, AiNoteComponent, PostReferencesComponent, PostFilesComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './post.component.html',
 })
@@ -96,6 +97,12 @@ export class PostComponent {
     const headings = this.post.value()?.headings ?? [];
     const i = headings.findIndex((h) => h.id === this.activeId());
     return i >= 0 ? { ...headings[i], index: i + 1, total: headings.length } : null;
+  });
+
+  /** the side column: series parts, contents, downloads */
+  protected readonly hasAside = computed(() => {
+    const post = this.post.value();
+    return !!post && (post.headings.length > 1 || this.seriesParts().length > 0 || post.files.length > 0);
   });
 
   protected readonly globeColor = computed(() => (this.reader.theme() === 'light' ? '#171614' : '#f2f0ea'));

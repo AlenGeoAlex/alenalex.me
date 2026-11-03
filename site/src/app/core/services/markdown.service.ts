@@ -74,6 +74,8 @@ export class MarkdownService {
         },
       },
     });
-    return { html: await marked.parse(markdown), headings, references };
+    // same as the build: tables fill the column, the wrapper scrolls
+    const html = (await marked.parse(markdown)).replaceAll('<table>', '<div class="table-scroll"><table>').replaceAll('</table>', '</table></div>');
+    return { html, headings, references };
   }
 }

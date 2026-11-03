@@ -44,6 +44,8 @@ export class PostPreviewService {
         readingMinutes: Math.max(1, Math.round(words / 220)),
         headings,
         references,
+        // downloads are hashed at build time; a preview of another revision has none to verify against
+        files: [],
         html,
       };
     } catch {

@@ -64,12 +64,30 @@ export interface PostReference {
   domain: string;
 }
 
+/** A download from `files:` in .meta. */
+export interface PostFile {
+  title: string;
+  description: string | null;
+  /** file name to save as */
+  name: string;
+  /** R2 for files in assets/, the GitHub Release URL otherwise */
+  url: string;
+  /** the same file straight from the public repo (assets/ files only) */
+  rawUrl: string | null;
+  size: number | null;
+  sha256: string;
+  /** fetched and hashed in the browser before saving (files in assets/, served from R2) */
+  verifiable: boolean;
+}
+
 export interface Post extends PostSummary {
   /** published: false. Readable by URL, never listed. */
   draft?: boolean;
   headings: PostHeading[];
   /** numbered in the order they first appear; the text's superscript markers point at #ref-<n> */
   references: PostReference[];
+  /** downloads (`files:` in .meta) */
+  files: PostFile[];
   html: string;
 }
 

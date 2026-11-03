@@ -110,6 +110,24 @@ public class PostValidatorTests
     }
 
     [Fact]
+    public void Downloads_must_exist_count_as_referenced_and_stay_small()
+    {
+        using var blog = new TempBlog();
+        const string meta = TempBlog.ValidMeta + "\nfiles:\n  - file: results.zip\n    title: \"Results\"\n  - file: gone.zip\n    title: \"Gone\"\n  - file: big.bin\n    title: \"Big\"\n";
+        var folder = blog.AddPost("p", meta: meta, assets: ["results.zip", "big.bin"]);
+        using (var big = File.OpenWrite(Path.Combine(folder.AssetsPath, "big.bin")))
+        {
+            big.SetLength(PostValidator.DownloadWarnBytes + 1);
+        }
+
+        var post = Assert.Single(PostValidator.ValidateAll(blog.Root).Posts);
+
+        Assert.Contains(post.Diagnostics, d => d.IsError && d.Message.Contains("assets/gone.zip does not exist"));
+        Assert.Contains(post.Diagnostics, d => !d.IsError && d.Message.Contains("better as a GitHub Release"));
+        Assert.DoesNotContain(post.Diagnostics, d => d.Message.Contains("not referenced") && d.FilePath.EndsWith("results.zip"));
+    }
+
+    [Fact]
     public void Path_traversal_is_rejected()
     {
         using var blog = new TempBlog();

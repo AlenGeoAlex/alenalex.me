@@ -124,7 +124,13 @@ internal static class PostValidator
 
         // Checked from the raw fields so it is reported even when other .meta fields are broken.
         CheckMetaAsset(metaResult.Fields?.OgImageAsset, "og_image_asset", folder.MetaPath, metaResult.KeyLines, assets, referenced, diagnostics);
-        WarnUnreferenced(folder.AssetsPath, assets, referenced, "not referenced by index.md or og_image_asset (it is still uploaded)", diagnostics);
+        foreach (var file in metaResult.Fields?.Files ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(file?.File)) continue;
+            CheckMetaAsset(file.File, "files", folder.MetaPath, metaResult.KeyLines, assets, referenced, diagnostics);
+            CheckDownloadSize(folder, file.File, metaResult.KeyLines, diagnostics);
+        }
+        WarnUnreferenced(folder.AssetsPath, assets, referenced, "not referenced by index.md, og_image_asset or files (it is still uploaded)", diagnostics);
 
         return new PostReport(folder, metaResult.Meta, assets, diagnostics, metaResult.KeyLines);
     }
@@ -260,6 +266,23 @@ internal static class PostValidator
         var problem = CheckAsset(path, assets);
         if (problem is not null)
             diagnostics.Add(Diagnostic.Error(metaPath, $"`{key}: {value}`: {problem}", keyLines.TryGetValue(key, out var line) ? line : null));
+    }
+
+    /// <summary>Downloads live in git, and every version stays in its history: big ones belong in a GitHub Release.</summary>
+    public const long DownloadWarnBytes = 25L * 1024 * 1024;
+    public const long DownloadMaxBytes = 100L * 1024 * 1024;
+
+    private static void CheckDownloadSize(PostFolder folder, string value, IReadOnlyDictionary<string, int> keyLines, List<Diagnostic> diagnostics)
+    {
+        var path = Path.Combine(folder.AssetsPath, AssetReferenceScanner.NormalizeOgImage(value).Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(path)) return;
+        var length = new FileInfo(path).Length;
+        var line = keyLines.TryGetValue("files", out var l) ? l : (int?)null;
+        var mb = $"{length / 1024d / 1024d:0.#} MB";
+        if (length > DownloadMaxBytes)
+            diagnostics.Add(Diagnostic.Error(folder.MetaPath, $"`files: {value}` is {mb}; GitHub rejects files over 100 MB, attach it to a GitHub Release and use `url:` instead", line));
+        else if (length > DownloadWarnBytes)
+            diagnostics.Add(Diagnostic.Warning(folder.MetaPath, $"`files: {value}` is {mb}; files this big are better as a GitHub Release (`url:`), every version stays in the repo history", line));
     }
 
     private static void WarnUnreferenced(

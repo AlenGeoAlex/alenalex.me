@@ -21,6 +21,8 @@
 // References: every external link in a post is numbered in the order it first appears and gets a
 // superscript marker linking to the references card at the end of the page; `references:` in .meta
 // (a list of { title, url }) adds sources that aren't linked in the text. Code blocks get a copy button.
+// Downloads: `files:` in .meta lists files in assets/ (size and SHA-256 worked out here) or `url:` files
+// (GitHub Releases, for anything too big for git) with their sha256; they're shown in a files card.
 // Search is built from the prerendered pages by Pagefind (package.json postbuild), not here.
 //
 // Assets: `assets/<file>` (or `./assets/<file>`) is rewritten to the R2 public URL
@@ -31,6 +33,7 @@
 // BLOGS_DIR overrides the blogs/ location.
 
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +45,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const siteRoot = join(here, '..');
 const blogsRoot = process.env.BLOGS_DIR ? resolve(process.env.BLOGS_DIR) : join(siteRoot, '..', 'blogs');
 const SITE_URL = 'https://alenalex.me';
+// raw.githubusercontent.com mirror of the downloads in assets/ (the repo is public)
+const RAW_BASE = 'https://raw.githubusercontent.com/AlenGeoAlex/alenalex.me/main/blogs';
 const ASSET_BASE = 'https://assets.alenalex.me/assets/hotlink-ok';
 
 const slugify = (s) =>
@@ -93,6 +98,7 @@ function parseMeta(raw, file) {
     // the revisions list starts at this day (earlier commits are drafting noise)
     revisionsSince: parseOptionalDate(meta['revisions-since'], 'revisions-since', file),
     extraReferences: parseReferences(meta.references, file),
+    downloads: parseFiles(meta.files, file),
     part,
   };
 }
@@ -109,6 +115,47 @@ function parseReferences(value, file) {
     }
     return { title, url };
   });
+}
+
+/**
+ * `files:` in .meta: downloads, either `file:` in assets/ (hashed here) or `url:` (a GitHub Release
+ * attachment, for anything too big for git) with its `sha256`.
+ */
+function parseFiles(value, file) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new Error(`blogs/${file} has a bad "files": it must be a list`);
+  return value.map((f, i) => {
+    const where = `blogs/${file} "files" entry #${i + 1}`;
+    const title = String(f?.title ?? '').trim();
+    const asset = f?.file ? String(f.file).replace(/^(\.\/)?assets\//, '') : null;
+    const url = f?.url ? String(f.url).trim() : null;
+    if (!title || !!asset === !!url) throw new Error(`${where} needs a title and exactly one of file or url`);
+    const description = f.description ? String(f.description) : null;
+    if (asset) return { title, description, asset };
+    const sha256 = String(f.sha256 ?? '').toLowerCase();
+    if (!/^https:\/\/\S+$/.test(url) || !/^[0-9a-f]{64}$/.test(sha256)) throw new Error(`${where} needs an https url and its sha256`);
+    const size = f.size === undefined ? null : Number(f.size);
+    return { title, description, url, sha256, size: Number.isInteger(size) && size > 0 ? size : null };
+  });
+}
+
+/** Size and SHA-256 of a download in the post's assets/, plus where it's served from. */
+async function describeDownload(dir, folder, d) {
+  if (!d.asset) return { title: d.title, description: d.description, name: decodeURIComponent(new URL(d.url).pathname.split('/').pop()), url: d.url, rawUrl: null, size: d.size, sha256: d.sha256, verifiable: false };
+  const path = join(dir, 'assets', d.asset);
+  if (!existsSync(path)) throw new Error(`blogs/${folder}/.meta lists files: ${d.asset}, but assets/${d.asset} does not exist`);
+  const bytes = await readFile(path);
+  return {
+    title: d.title,
+    description: d.description,
+    name: d.asset.split('/').pop(),
+    url: `${ASSET_BASE}/${folder}/${d.asset}`,
+    rawUrl: `${RAW_BASE}/${folder}/assets/${d.asset}`,
+    size: bytes.length,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+    // served from R2 (CORS allows the site), so the browser can hash it before saving
+    verifiable: true,
+  };
 }
 
 /** "github.com" from "https://www.github.com/x". */
@@ -144,7 +191,8 @@ async function renderPost(dir, folder, path, meta, render) {
   const md = await readFile(join(dir, 'index.md'), 'utf8');
   const { html, headings, references } = await render(md, folder, path);
   const words = md.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
-  const { ogImageAsset, extraReferences, ...rest } = meta;
+  const { ogImageAsset, extraReferences, downloads, ...rest } = meta;
+  const files = await Promise.all(downloads.map((d) => describeDownload(dir, folder, d)));
   // sources listed in .meta come after the ones linked in the text
   for (const r of extraReferences) {
     if (!references.some((x) => x.url === r.url)) references.push({ ...r, domain: domainOf(r.url) });
@@ -157,6 +205,7 @@ async function renderPost(dir, folder, path, meta, render) {
     readingMinutes: Math.max(1, Math.round(words / 220)),
     headings,
     references,
+    files,
     html,
   };
 }
@@ -231,7 +280,9 @@ async function main() {
         },
       },
     });
-    return { html: await marked.parse(md), headings, references };
+    // tables fill the column; the wrapper scrolls sideways when one is wider than that
+    const html = (await marked.parse(md)).replaceAll('<table>', '<div class="table-scroll"><table>').replaceAll('</table>', '</table></div>');
+    return { html, headings, references };
   }
 
   const all = []; // every post and part, drafts included
@@ -339,7 +390,7 @@ async function main() {
   await mkdir(outDir, { recursive: true });
   await mkdir(join(siteRoot, 'src', 'content'), { recursive: true });
 
-  const summary = ({ html, headings, references: _r, published: _p, ...rest }) => rest;
+  const summary = ({ html, headings, references: _r, files: _f, published: _p, ...rest }) => rest;
   const index = published.map(summary).reverse(); // newest first
   await writeFile(join(siteRoot, 'src', 'content', 'posts.json'), JSON.stringify(index, null, 2) + '\n');
   await writeFile(join(siteRoot, 'src', 'content', 'series.json'), JSON.stringify(series, null, 2) + '\n');

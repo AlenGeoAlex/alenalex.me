@@ -36,6 +36,22 @@ internal sealed record PostMetaResult(
     public bool HasErrors => Meta is null || Diagnostics.Any(d => d.IsError);
 }
 
+/// <summary>
+/// One entry of <c>files:</c>, a download. Either <c>file</c> (in the post's assets/, hashed at build time)
+/// or <c>url</c> (e.g. a GitHub Release attachment, too big for git) with its <c>sha256</c>.
+/// </summary>
+internal sealed class MetaFile
+{
+    public string? File { get; set; }
+    public string? Url { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public string? Sha256 { get; set; }
+
+    /// <summary>Kept as text so a non-number gets a clear message.</summary>
+    public string? Size { get; set; }
+}
+
 /// <summary>One entry of <c>references:</c>, a source that isn't linked in the text.</summary>
 internal sealed class MetaReference
 {
@@ -67,6 +83,8 @@ internal sealed class MetaFields
 
     public List<MetaReference>? References { get; set; }
 
+    public List<MetaFile>? Files { get; set; }
+
     [YamlMember(Alias = "revisions-since", ApplyNamingConventions = false)]
     public string? RevisionsSince { get; set; }
 
@@ -82,11 +100,11 @@ internal sealed class MetaFields
 /// Applies the rules of <c>parseMeta</c> in <c>site/tools/build-content.mjs</c>, plus stricter checks
 /// for things the site would trip over later.
 /// </summary>
-internal static class PostMetaReader
+internal static partial class PostMetaReader
 {
     private static readonly HashSet<string> KnownKeys = new(StringComparer.Ordinal)
     {
-        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist", "revisions-since", "references",
+        "title", "page-title", "date", "published", "icon", "tags", "type", "excerpt", "og_image_asset", "slug", "part", "ai-assist", "revisions-since", "references", "files",
     };
 
     public static PostMetaResult Read(string metaText, string metaPath)
@@ -102,6 +120,7 @@ internal static class PostMetaReader
         var aiAssist = context.OptionalBool(fields.AiAssist, "ai-assist");
         var revisionsSince = context.OptionalDate(fields.RevisionsSince, "revisions-since");
         CheckReferences(fields.References, context);
+        CheckFiles(fields.Files, context);
 
         var type = MetaReadContext.NullIfEmpty(fields.Type);
         if (type is not null and not "markdown" and not "html")
@@ -136,6 +155,44 @@ internal static class PostMetaReader
 
         return new PostMetaResult(meta, context.Diagnostics, fields, context.KeyLines);
     }
+
+    // build-content.mjs fails on the same things; files in assets/ are checked by PostValidator
+    private static void CheckFiles(List<MetaFile>? files, MetaReadContext context)
+    {
+        if (files is null) return;
+        for (var i = 0; i < files.Count; i++)
+        {
+            var f = files[i];
+            var which = $"`files` entry #{i + 1}";
+            if (string.IsNullOrWhiteSpace(f?.Title))
+            {
+                context.Error($"{which} needs a `title`", "files");
+            }
+            var hasFile = !string.IsNullOrWhiteSpace(f?.File);
+            var hasUrl = !string.IsNullOrWhiteSpace(f?.Url);
+            if (hasFile == hasUrl)
+            {
+                context.Error($"{which} needs exactly one of `file` (in assets/) or `url` (e.g. a GitHub Release)", "files");
+                continue;
+            }
+            if (hasUrl)
+            {
+                if (!Uri.TryCreate(f!.Url!.Trim(), UriKind.Absolute, out var uri) || uri.Scheme != "https")
+                    context.Error($"{which}: `url` must be https", "files");
+                if (f.Sha256 is not { } sha || !Sha256Pattern().IsMatch(sha.Trim()))
+                    context.Error($"{which}: a `url` file needs its `sha256` (64 hex characters; `shasum -a 256 <file>`)", "files");
+                if (f.Size is { } size && !(long.TryParse(size, out var bytes) && bytes > 0))
+                    context.Error($"{which}: `size` must be a whole number of bytes", "files");
+            }
+            else if (f!.Sha256 is not null || f.Size is not null)
+            {
+                context.Warning($"{which}: `sha256` and `size` are worked out from assets/ at build time, so they're ignored here", "files");
+            }
+        }
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex("^[0-9a-fA-F]{64}$")]
+    private static partial System.Text.RegularExpressions.Regex Sha256Pattern();
 
     // build-content.mjs fails on the same things
     private static void CheckReferences(List<MetaReference>? references, MetaReadContext context)
