@@ -1,0 +1,21 @@
+title: "Not all text is equal: keeping user text from hijacking my prompts"
+date: 2026-11-02
+published: false
+part: 2
+tags: ["easetalk", "prompt-injection", "llm", "gen-ai", "dotnet"]
+excerpt: "Some of the words my AI reads are mine, and some come from the people using the app. Here's how I keep the two apart with types and random tags, and why it still isn't bulletproof."
+ai-assist: true
+slug: "not-all-text-is-equal"
+files:
+  - title: "Test messages"
+    file: messages.json
+    description: "The 25 messages: 10 normal ones and 15 attacks, with the right answer for each."
+  - title: "Prompts"
+    file: prompts.md
+    description: "Every prompt version (A to D) and the Decision-1 request, exactly as sent."
+  - title: "Script"
+    file: run.py
+    description: "The Python script that ran it. Standard library only."
+  - title: "Results"
+    file: results.zip
+    description: "Every one of the 3,250 calls with its answer and outcome, plus the summary tables."

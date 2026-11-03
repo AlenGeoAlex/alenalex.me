@@ -1,0 +1,67 @@
+<section aria-labelledby="files-title">
+  <p id="files-title" class="caps m-0 flex justify-between text-(--r-ink-3)">files <span>{{ files().length }}</span></p>
+
+  <ul class="mt-3 mb-0 grid list-none gap-2.5 p-0">
+    @for (file of files(); track file.url) {
+      @let s = state(file);
+      <li class="grid gap-2 border border-(--r-rule) bg-(--r-bg) p-3">
+        <span class="grid gap-0.5">
+          <span class="text-sm leading-snug text-(--r-ink)">{{ file.title }}</span>
+          <span class="truncate text-(--r-ink-3)" [title]="file.name">{{ file.name }}@if (file.size) { · {{ size(file.size) }} }</span>
+        </span>
+        @if (file.description) {
+          <span class="text-(--r-ink-2)">{{ file.description }}</span>
+        }
+
+        @if (file.verifiable) {
+          <button type="button" (click)="download(file)"
+            [disabled]="s.phase === 'downloading' || s.phase === 'verifying'"
+            [attr.aria-busy]="s.phase === 'downloading' || s.phase === 'verifying'"
+            class="border px-2.5 py-1.5 text-left transition-colors disabled:cursor-wait"
+            [class]="s.phase === 'mismatch' ? 'border-(--r-accent) text-(--r-accent)' : s.phase === 'verified' ? 'border-(--r-ink-3) text-(--r-ink)' : 'border-(--r-rule) text-(--r-ink-2) hover:border-(--r-ink-3) hover:text-(--r-ink)'">
+            @switch (s.phase) {
+              @case ('downloading') { downloading{{ $any(s).percent !== null ? ' ' + $any(s).percent + '%' : '…' }} }
+              @case ('verifying') { verifying sha256… }
+              @case ('verified') { verified ✓ saved }
+              @case ('mismatch') { hash mismatch, not saved }
+              @default { ↓ download &amp; verify }
+            }
+          </button>
+        } @else {
+          <a [href]="file.url" target="_blank" rel="noopener"
+            class="border border-(--r-rule) px-2.5 py-1.5 text-(--r-ink-2) no-underline hover:border-(--r-ink-3) hover:text-(--r-ink)">
+            ↓ download <span class="text-(--r-ink-3)">· github release ↗</span>
+          </a>
+        }
+
+        @if (s.phase === 'mismatch') {
+          <p class="m-0 border border-dashed border-(--r-accent) p-2 text-(--r-ink-2)" role="alert">
+            What came back doesn't match the repo copy, so it wasn't saved. Try later, or take it from GitHub.
+            <span class="mt-1 block break-all text-(--r-ink-3)">got {{ $any(s).got }}</span>
+          </p>
+        } @else if (s.phase === 'failed') {
+          <p class="m-0 text-(--r-ink-2)" role="alert">
+            Couldn't check it in the browser. Get it
+            <a [href]="href(file)" class="text-(--r-ink)">directly</a>
+            @if (file.rawUrl) { or <a [href]="file.rawUrl" class="text-(--r-ink)">from GitHub</a> }
+            and verify the hash below.
+          </p>
+        }
+
+        <span class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-(--r-ink-3)">
+          <code class="font-mono text-(--r-ink-2)" [title]="file.sha256">{{ file.sha256.slice(0, 10) }}…</code>
+          <button type="button" (click)="copyHash(file)" class="hover:text-(--r-ink)">{{ copied() === file.url ? 'copied ✓' : 'copy sha256' }}</button>
+          @if (file.rawUrl) {
+            <span aria-hidden="true">·</span>
+            <a [href]="file.rawUrl" target="_blank" rel="noopener" class="text-(--r-ink-3) no-underline hover:text-(--r-ink)">raw ↗</a>
+          }
+        </span>
+
+        <button type="button" (click)="copyCheck(file)" [title]="'Copies a command that checks the file\'s SHA-256 on ' + os.label"
+          class="justify-self-start text-(--r-ink-3) hover:text-(--r-ink)">
+          {{ copiedCheck() === file.url ? 'copied ✓ paste it in a terminal' : 'copy check command · ' + os.label }}
+        </button>
+      </li>
+    }
+  </ul>
+</section>
