@@ -27,7 +27,7 @@ Now a customer types this:
 
 Here's the uncomfortable bit: to the AI, it's **all just text**. My instructions and the customer's message end up in the same stream of words that the model reads from top to bottom.
 
-To be fair, it's not a complete free-for-all. Models are trained to give the system's instructions more weight than what a user types ([source](https://arxiv.org/abs/2404.13208)). But that's a habit the model learned, not a wall. There's nothing that *physically* stops a user's message from being read as an instruction. The model has to judge which is which, and most of the time it judges right. Most of the time.
+To be fair, it's not a complete free-for-all. Models are trained to give the system's instructions more weight than what a user types ([Training LLMs to Prioritize Privileged Instructions](https://arxiv.org/abs/2404.13208)). But that's a habit the model learned, not a wall. There's nothing that *physically* stops a user's message from being read as an instruction. The model has to judge which is which, and most of the time it judges right. Most of the time.
 
 This is called **prompt injection**: someone sneaking instructions into a place where the AI only expected normal text. It's number one on OWASP's list of security risks for apps built on language models ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)).
 

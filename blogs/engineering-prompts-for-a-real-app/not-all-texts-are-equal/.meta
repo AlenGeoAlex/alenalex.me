@@ -1,6 +1,6 @@
 title: "Not all text is equal: keeping user text from hijacking my prompts"
 date: 2026-11-02
-published: false
+published: true 
 part: 2
 tags: ["easetalk", "prompt-injection", "llm", "gen-ai", "dotnet"]
 excerpt: "Some of the words my AI reads are mine, and some come from the people using the app. Here's how I keep the two apart with types and random tags, and why it still isn't bulletproof."
