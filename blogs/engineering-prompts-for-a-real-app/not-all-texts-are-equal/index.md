@@ -413,6 +413,6 @@ And the small experiment backed most of that up. Fencing cut the attacks that wo
 
 ### What's next
 
-In **Part 3**, I'll get into how I test all of this properly: running the same case many times, pass rates instead of pass/fail, and using another AI as a judge without blindly trusting it. Basically, testing something that never answers the same way twice.
+In **Part 3**, I'll get into how I test all of this properly: running the same case many times, pass rates instead of pass/fail, and using another AI as a judge without blindly trusting it. Basically, testing something that never answers the same way twice. After that, there's a bonus part on how I version my prompts.
 
 If you've found an attack that gets past a fence like this, I'd genuinely love to see it. Drop a note in the guestbook or reach me at [alen@alenalex.me](mailto:alen@alenalex.me).

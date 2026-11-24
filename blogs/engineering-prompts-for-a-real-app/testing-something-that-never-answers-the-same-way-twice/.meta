@@ -1,0 +1,8 @@
+title: "Testing something that never answers the same way twice"
+date: 2026-11-24
+published: true
+part: 3
+tags: ["llm", "testing", "xunit", "dotnet", "easetalk", "gen-ai"]
+excerpt: "AI never gives the same answer twice, so a normal pass/fail test doesn't really work. Here's how I test my prompts: run every case many times, check rules instead of exact words, and let other AIs grade the answers without trusting them blindly."
+ai-assist: true
+slug: "testing-unpredictable-ai"

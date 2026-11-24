@@ -407,5 +407,6 @@ None of this is fancy. It's mostly treating prompts the way I'd treat any other 
 
 - **Part 2: Not all texts are equal.** Remember that word `Trusted`? Some text in a prompt comes from me, and some comes from the user. If you're not careful, a user can type something that the AI mistakes for instructions. Part 2 covers how I keep those apart, the random tags I wrap user text in, and why I'm honest that it still isn't bulletproof.
 - **Part 3: Testing something that never answers the same way twice.** How I check that the AI actually *behaves* the way the prompt says: running the same case many times, pass rates instead of pass/fail, and using another AI as a judge (without blindly trusting it).
+- **Bonus part: Versioning prompts.** How I keep track of which version of a prompt was running at any point, and why every version is saved as a file nobody is allowed to edit.
 
 If you've built something similar or think I've done something silly here, I'd genuinely love to hear it. Drop a note in the guestbook or reach me out at [alen@alenalex.me](mailto:alen@alenalex.me).

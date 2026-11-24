@@ -8,7 +8,6 @@ using AlenAlex.Api.Infrastructure.Http;
 using AlenAlex.Api.Infrastructure.Persistence;
 using AlenAlex.Api.Json;
 using AlenAlex.Api.Options;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
